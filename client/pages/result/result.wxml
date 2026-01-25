@@ -1,0 +1,37 @@
+<view class="container">
+  <view class="card">
+    <image class="main-image" mode="aspectFill" src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800" />
+  </view>
+
+  <view class="section-title">候选图</view>
+  <view class="grid">
+    <image class="thumb" mode="aspectFill" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400" />
+    <image class="thumb" mode="aspectFill" src="https://images.unsplash.com/photo-1482192505345-5655af888cc4?w=400" />
+    <image class="thumb" mode="aspectFill" src="https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?w=400" />
+    <image class="thumb" mode="aspectFill" src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400" />
+  </view>
+
+  <view class="section-title">文案</view>
+  <view class="card">
+    <text class="muted">标题</text>
+    <text>冬日城市夜景海报</text>
+    <view style="height: 8px;"></view>
+    <text class="muted">摘要</text>
+    <text>霓虹与雪夜交织，展现城市的静谧与温度。</text>
+    <view style="height: 8px;"></view>
+    <text class="muted">标签</text>
+    <text>#冬日 #城市 #夜景 #海报</text>
+  </view>
+
+  <view class="row" style="margin-top: 16px;">
+    <t-button class="btn-ghost" variant="outline" bind:tap="copyText">一键复制</t-button>
+    <view style="width: 12px;"></view>
+    <t-button class="btn-primary" theme="primary">下载</t-button>
+  </view>
+
+  <view class="row" style="margin-top: 12px;">
+    <t-button class="btn-ghost" variant="outline">再次生成</t-button>
+    <view style="width: 12px;"></view>
+    <t-button class="btn-primary" theme="primary">高清生成</t-button>
+  </view>
+</view>

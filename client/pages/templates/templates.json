@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "模板库",
+  "usingComponents": {
+    "t-search": "tdesign-miniprogram/search/search",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-empty": "tdesign-miniprogram/empty/empty"
+  },
+  "enablePullDownRefresh": true
+}

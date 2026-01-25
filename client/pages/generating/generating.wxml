@@ -1,0 +1,15 @@
+<view class="container">
+  <view class="card">
+    <text class="section-title">生成中</text>
+    <view class="progress">
+      <view class="progress-bar" style="width: {{progress}}%;"></view>
+    </view>
+    <text class="muted">{{statusText}}</text>
+  </view>
+
+  <view style="margin-top: 16px;" class="row" >
+    <t-button class="btn-ghost" variant="outline" bind:tap="goBack">后台运行</t-button>
+    <view style="width: 12px;"></view>
+    <t-button class="btn-primary" theme="primary" bind:tap="cancel">取消</t-button>
+  </view>
+</view>

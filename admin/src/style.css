@@ -1,0 +1,99 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --color-bg: #f5f7fb;
+  --color-bg-page: #f5f7f9;
+  --color-bg-card: #ffffff;
+  --color-card: #ffffff;
+  --color-text: #111827;
+  --color-muted: #6b7280;
+  --color-primary: #3b82f6;
+  --color-primary-dark: #2563eb;
+  --color-border: #e5e7eb;
+  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --app-bg: radial-gradient(1200px 600px at 10% 10%, #eef2ff 0, rgba(238, 242, 255, 0) 55%),
+    radial-gradient(900px 500px at 90% 20%, #ecfeff 0, rgba(236, 254, 255, 0) 45%),
+    var(--color-bg);
+}
+
+html[data-theme='dark'] {
+  --color-bg: #0f172a;
+  --color-bg-page: #0b1120;
+  --color-bg-card: #111827;
+  --color-card: #111827;
+  --color-text: #e5e7eb;
+  --color-muted: #9ca3af;
+  --color-primary: #60a5fa;
+  --color-primary-dark: #3b82f6;
+  --color-border: #1f2937;
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --app-bg: radial-gradient(900px 520px at 10% 10%, rgba(59, 130, 246, 0.18), transparent 55%),
+    radial-gradient(700px 480px at 90% 20%, rgba(16, 185, 129, 0.12), transparent 55%),
+    var(--color-bg);
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--color-text);
+  background: var(--app-bg);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: inherit;
+}
+a:hover {
+  color: var(--color-primary-dark);
+}
+
+button {
+  border-radius: 10px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.05s ease;
+}
+button:hover {
+  background-color: var(--color-primary-dark);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+}
+button:active {
+  transform: translateY(1px);
+}
+button:focus,
+button:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}

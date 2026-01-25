@@ -1,0 +1,38 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/templates/templates",
+    "pages/mine/mine",
+    "pages/style-library/style-library",
+    "pages/generating/generating",
+    "pages/result/result",
+    "pages/works/works",
+    "pages/login/login"
+  ],
+  "window": {
+    "navigationBarTitleText": "图文生成",
+    "navigationBarTextStyle": "white",
+    "navigationBarBackgroundColor": "#4C6FFF",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#9CA3AF",
+    "selectedColor": "#3B82F6",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/templates/templates",
+        "text": "模板库"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "生成中",
+  "usingComponents": {
+    "t-button": "tdesign-miniprogram/button/button"
+  }
+}

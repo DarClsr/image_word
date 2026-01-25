@@ -1,0 +1,54 @@
+<view class="container">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <t-search placeholder="搜索模板、提示词" bind:change="onSearch" />
+  </view>
+
+  <!-- 分类筛选 -->
+  <scroll-view scroll-x class="filter-scroll" show-scrollbar="{{false}}">
+    <view class="filter-list">
+      <block wx:for="{{categories}}" wx:key="value">
+        <view class="filter-item {{currentCategory === item.value ? 'active' : ''}}" bindtap="onCategoryChange" data-value="{{item.value}}">
+          {{item.label}}
+        </view>
+      </block>
+    </view>
+  </scroll-view>
+
+  <!-- 模板列表 -->
+  <view class="template-grid">
+    <block wx:for="{{templates}}" wx:key="id">
+      <view class="template-card" bindtap="onTemplateDetail" data-id="{{item.id}}">
+        <image class="template-image" src="{{item.imageUrl}}" mode="aspectFill" />
+        <view class="template-info">
+          <view class="template-prompt">{{item.prompt}}</view>
+          <view class="template-meta">
+            <view class="model-tag">{{item.model}}</view>
+            <view class="style-tag">{{item.style}}</view>
+          </view>
+          <view class="template-stats">
+            <view class="stat-item">
+              <text class="stat-icon">♥</text>
+              <text>{{item.likes}}</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-icon">↗</text>
+              <text>{{item.shares}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-more" wx:if="{{loading}}">
+    <t-loading theme="circular" size="40rpx" text="加载中..." />
+  </view>
+  <view class="no-more" wx:if="{{noMore && templates.length > 0}}">
+    <text class="muted">— 没有更多了 —</text>
+  </view>
+  <view class="empty" wx:if="{{!loading && templates.length === 0}}">
+    <t-empty description="暂无模板" />
+  </view>
+</view>

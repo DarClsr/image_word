@@ -1,0 +1,43 @@
+<view class="container login-container">
+  <!-- Logo 区域 -->
+  <view class="logo-area">
+    <view class="logo">
+      <text class="logo-icon">✨</text>
+    </view>
+    <text class="app-name">图文生成</text>
+    <text class="app-slogan">AI 创作，一键生成精美图文</text>
+  </view>
+
+  <!-- 登录方式 -->
+  <view class="login-area">
+    <button class="login-btn wechat-btn" open-type="getPhoneNumber" bindgetphonenumber="onGetPhoneNumber">
+      <text class="btn-icon">📱</text>
+      <text>微信手机号快捷登录</text>
+    </button>
+    
+    <button class="login-btn avatar-btn" bindtap="onWechatLogin">
+      <text class="btn-icon">💬</text>
+      <text>微信授权登录</text>
+    </button>
+
+    <view class="divider">
+      <view class="line"></view>
+      <text class="divider-text">或</text>
+      <view class="line"></view>
+    </view>
+
+    <view class="other-login" bindtap="onGuestMode">
+      <text>游客模式体验</text>
+    </view>
+  </view>
+
+  <!-- 协议区域 -->
+  <view class="agreement">
+    <view class="checkbox-area" bindtap="toggleAgreement">
+      <view class="checkbox {{agreed ? 'checked' : ''}}">
+        <text wx:if="{{agreed}}">✓</text>
+      </view>
+      <text class="agreement-text">我已阅读并同意<text class="link" catchtap="showUserAgreement">《用户协议》</text>和<text class="link" catchtap="showPrivacyPolicy">《隐私政策》</text></text>
+    </view>
+  </view>
+</view>

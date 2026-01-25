@@ -1,0 +1,19 @@
+<view class="container">
+  <scroll-view scroll-x class="tabs" show-scrollbar="false">
+    <view class="tabs-inner">
+      <block wx:for="{{tabs}}" wx:key="name">
+        <t-tag class="tab-tag" theme="primary" variant="{{item.active ? 'dark' : 'light'}}" bindtap="onSwitchTab" data-name="{{item.name}}">{{item.name}}</t-tag>
+      </block>
+    </view>
+  </scroll-view>
+
+  <view class="grid">
+    <block wx:for="{{styles}}" wx:key="name">
+      <view class="card style-card">
+        <view class="style-cover"></view>
+        <text class="style-name">{{item.name}}</text>
+        <text class="muted">{{item.desc}}</text>
+      </view>
+    </block>
+  </view>
+</view>

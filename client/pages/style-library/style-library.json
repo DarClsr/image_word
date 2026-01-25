@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "风格库",
+  "usingComponents": {
+    "t-tag": "tdesign-miniprogram/tag/tag"
+  }
+}

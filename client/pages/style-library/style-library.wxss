@@ -1,0 +1,44 @@
+.tabs {
+  margin-bottom: 14px;
+  white-space: nowrap;
+}
+
+.tabs-inner {
+  display: inline-flex;
+  gap: 10px;
+  padding-bottom: 2px;
+}
+
+.tab-tag {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.tab {
+  padding: 6px 12px;
+  background: #EAF2FF;
+  color: #3B82F6;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.tab.active {
+  background: #3B82F6;
+  color: #FFFFFF;
+}
+
+.style-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.style-cover {
+  height: 90px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #60A5FA, #93C5FD);
+}
+
+.style-name {
+  font-weight: 600;
+}
