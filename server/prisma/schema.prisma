@@ -1,0 +1,287 @@
+// prisma/schema.prisma
+// 图文生成小程序 - 数据库模型定义
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== 用户相关 ====================
+
+/// 小程序用户
+model User {
+  id              Int       @id @default(autoincrement())
+  openid          String    @unique @db.VarChar(64)
+  unionid         String?   @db.VarChar(64)
+  nickname        String    @db.VarChar(50)
+  avatar          String    @db.VarChar(500)
+  phone           String?   @db.VarChar(20)
+  gender          Int       @default(0) @db.SmallInt  // 0-未知 1-男 2-女
+  
+  // 会员信息
+  memberType      String    @default("free") @db.VarChar(20)  // free/basic/pro
+  memberExpireAt  DateTime?
+  
+  // 额度信息
+  totalQuota      Int       @default(5)
+  usedQuota       Int       @default(0)
+  
+  // 状态
+  status          Int       @default(1) @db.SmallInt  // 0-封禁 1-正常
+  
+  // 时间
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // 关联
+  works           Works[]
+  tasks           Task[]
+  
+  @@index([openid])
+  @@index([phone])
+  @@index([status])
+  @@index([createdAt])
+  @@map("users")
+}
+
+/// 管理员用户
+model AdminUser {
+  id              Int       @id @default(autoincrement())
+  username        String    @unique @db.VarChar(50)
+  password        String    @db.VarChar(100)  // bcrypt 哈希
+  salt            String    @db.VarChar(32)
+  realName        String?   @db.VarChar(50)
+  role            String    @default("admin") @db.VarChar(20)  // super_admin/admin/operator
+  permissions     String[]  @default([])
+  
+  status          Int       @default(1) @db.SmallInt  // 0-禁用 1-正常
+  lastLoginAt     DateTime?
+  lastLoginIp     String?   @db.VarChar(50)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  auditLogs       AuditLog[]
+  
+  @@index([username])
+  @@map("admin_users")
+}
+
+// ==================== 分类相关 ====================
+
+/// 分类（风格/模型）
+model Category {
+  id              Int       @id @default(autoincrement())
+  name            String    @db.VarChar(50)
+  code            String    @unique @db.VarChar(50)
+  type            String    @db.VarChar(20)  // style/model
+  icon            String?   @db.VarChar(200)
+  cover           String?   @db.VarChar(500)
+  description     String?   @db.VarChar(200)
+  
+  // 扩展配置（JSON）
+  config          Json?     // 模型特有配置：价格、速度、质量等
+  
+  // 层级
+  parentId        Int?
+  parent          Category? @relation("CategoryTree", fields: [parentId], references: [id])
+  children        Category[] @relation("CategoryTree")
+  
+  // 排序与状态
+  sort            Int       @default(0)
+  status          Int       @default(1) @db.SmallInt  // 0-禁用 1-正常
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // 关联
+  worksAsStyle    Works[]   @relation("WorkStyle")
+  worksAsModel    Works[]   @relation("WorkModel")
+  
+  @@index([type])
+  @@index([status])
+  @@index([sort])
+  @@map("categories")
+}
+
+// ==================== 作品相关 ====================
+
+/// 作品
+model Works {
+  id              Int       @id @default(autoincrement())
+  
+  // 所属用户
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id])
+  
+  // 生成信息
+  prompt          String    @db.Text
+  negativePrompt  String?   @db.Text
+  
+  // 分类关联
+  styleId         Int
+  style           Category  @relation("WorkStyle", fields: [styleId], references: [id])
+  modelId         Int
+  model           Category  @relation("WorkModel", fields: [modelId], references: [id])
+  
+  // 图片信息
+  imageUrl        String    @db.VarChar(500)
+  thumbnailUrl    String?   @db.VarChar(500)
+  width           Int
+  height          Int
+  fileSize        Int?      // 文件大小(KB)
+  
+  // 生成参数（JSON）
+  params          Json?
+  
+  // 审核状态
+  status          String    @default("pending") @db.VarChar(20)  // pending/approved/rejected
+  auditReason     String?   @db.VarChar(500)
+  auditedAt       DateTime?
+  auditedBy       Int?
+  
+  // 公开与统计
+  isPublic        Boolean   @default(false)
+  viewCount       Int       @default(0)
+  downloadCount   Int       @default(0)
+  likeCount       Int       @default(0)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([styleId])
+  @@index([modelId])
+  @@index([status])
+  @@index([isPublic])
+  @@index([createdAt])
+  @@map("works")
+}
+
+// ==================== 任务相关 ====================
+
+/// 生成任务
+model Task {
+  id              Int       @id @default(autoincrement())
+  taskId          String    @unique @db.VarChar(36)  // UUID
+  
+  // 所属用户
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id])
+  
+  // 任务类型
+  type            String    @db.VarChar(20)  // text2img/img2img/text
+  
+  // 任务状态
+  status          String    @default("pending") @db.VarChar(20)
+  // pending -> processing -> completed/failed
+  
+  // 任务参数（JSON）
+  params          Json
+  
+  // 任务结果
+  result          Json?
+  worksId         Int?      // 生成的作品ID
+  
+  // 重试信息
+  retryCount      Int       @default(0)
+  maxRetry        Int       @default(3)
+  errorMsg        String?   @db.Text
+  
+  // 时间
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([taskId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("tasks")
+}
+
+// ==================== 审计日志 ====================
+
+/// 操作审计日志
+model AuditLog {
+  id              Int       @id @default(autoincrement())
+  
+  // 操作者
+  adminId         Int
+  admin           AdminUser @relation(fields: [adminId], references: [id])
+  
+  // 操作信息
+  action          String    @db.VarChar(50)  // create/update/delete/audit/ban
+  module          String    @db.VarChar(50)  // user/works/category
+  targetId        Int?
+  targetType      String?   @db.VarChar(50)
+  
+  // 变更数据
+  oldValue        Json?
+  newValue        Json?
+  
+  // 请求信息
+  ip              String    @db.VarChar(50)
+  userAgent       String?   @db.VarChar(500)
+  
+  createdAt       DateTime  @default(now())
+  
+  @@index([adminId])
+  @@index([action])
+  @@index([module])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ==================== 系统配置 ====================
+
+/// 系统配置
+model SystemConfig {
+  id              Int       @id @default(autoincrement())
+  key             String    @unique @db.VarChar(100)
+  value           String    @db.Text
+  description     String?   @db.VarChar(200)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("system_configs")
+}
+
+// ==================== 模板相关 ====================
+
+/// 公共模板
+model Template {
+  id              Int       @id @default(autoincrement())
+  
+  // 模板信息
+  name            String    @db.VarChar(100)
+  prompt          String    @db.Text
+  imageUrl        String    @db.VarChar(500)
+  
+  // 分类
+  styleId         Int
+  modelId         Int
+  
+  // 统计
+  useCount        Int       @default(0)
+  likeCount       Int       @default(0)
+  
+  // 状态
+  status          Int       @default(1) @db.SmallInt
+  sort            Int       @default(0)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([styleId])
+  @@index([status])
+  @@index([sort])
+  @@map("templates")
+}

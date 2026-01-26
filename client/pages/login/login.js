@@ -1,48 +1,67 @@
+/**
+ * 登录页面
+ */
+const app = getApp();
+
 Page({
   data: {
     agreed: false
   },
 
+  /**
+   * 切换协议同意状态
+   */
   toggleAgreement() {
     this.setData({ agreed: !this.data.agreed });
   },
 
+  /**
+   * 检查协议是否同意
+   */
   checkAgreement() {
     if (!this.data.agreed) {
-      wx.showToast({ title: "请先同意用户协议", icon: "none" });
+      app.showError('请先同意用户协议和隐私政策');
       return false;
     }
     return true;
   },
 
+  /**
+   * 手机号登录
+   */
   onGetPhoneNumber(e) {
     if (!this.checkAgreement()) return;
     
-    if (e.detail.errMsg === "getPhoneNumber:ok") {
+    if (e.detail.errMsg === 'getPhoneNumber:ok') {
       const { code } = e.detail;
-      // TODO: 发送 code 到后端换取手机号
-      this.doLogin({ type: "phone", code });
+      this.doLogin({ type: 'phone', code });
     } else {
-      wx.showToast({ title: "获取手机号失败", icon: "none" });
+      app.showError('获取手机号失败');
     }
   },
 
+  /**
+   * 微信授权登录
+   */
   onWechatLogin() {
     if (!this.checkAgreement()) return;
     
     wx.getUserProfile({
-      desc: "用于完善用户资料",
+      desc: '用于完善用户资料',
       success: (res) => {
         const userInfo = res.userInfo;
         wx.login({
           success: (loginRes) => {
             if (loginRes.code) {
-              this.doLogin({ 
-                type: "wechat", 
+              this.doLogin({
+                type: 'wechat',
                 code: loginRes.code,
-                userInfo 
+                userInfo
               });
             }
+          },
+          fail: () => {
+            app.showError('登录失败，请重试');
           }
         });
       },
@@ -51,64 +70,91 @@ Page({
         wx.login({
           success: (loginRes) => {
             if (loginRes.code) {
-              this.doLogin({ type: "wechat", code: loginRes.code });
+              this.doLogin({ type: 'wechat', code: loginRes.code });
             }
+          },
+          fail: () => {
+            app.showError('登录失败，请重试');
           }
         });
       }
     });
   },
 
+  /**
+   * 执行登录
+   */
   doLogin(params) {
-    wx.showLoading({ title: "登录中..." });
+    app.showLoading('登录中...');
     
-    // TODO: 调用后端登录接口
+    // TODO: 调用真实登录 API
+    // const res = await authApi.wechatLogin(params);
+    
     // 模拟登录成功
     setTimeout(() => {
-      wx.hideLoading();
+      app.hideLoading();
       
       // 保存登录状态
-      wx.setStorageSync("token", "mock_token_" + Date.now());
-      wx.setStorageSync("userInfo", {
-        id: "10001",
-        nickName: params.userInfo?.nickName || "用户",
-        avatarUrl: params.userInfo?.avatarUrl || ""
-      });
+      const token = 'mock_token_' + Date.now();
+      const userInfo = {
+        id: '10001',
+        nickName: params.userInfo?.nickName || '微信用户',
+        avatarUrl: params.userInfo?.avatarUrl || '',
+        memberType: 'free'
+      };
       
-      wx.showToast({ title: "登录成功", icon: "success" });
+      app.setLoginStatus({ token, userInfo });
+      
+      app.showSuccess('登录成功');
       
       // 返回上一页
       setTimeout(() => {
-        wx.navigateBack();
-      }, 1000);
-    }, 1000);
+        wx.navigateBack({ fail: () => {
+          wx.switchTab({ url: '/pages/home/home' });
+        }});
+      }, 800);
+    }, 1200);
   },
 
+  /**
+   * 游客模式
+   */
   onGuestMode() {
     wx.showModal({
-      title: "游客模式",
-      content: "游客模式下部分功能受限，是否继续？",
+      title: '游客模式',
+      content: '游客模式下部分功能受限，无法保存生成的作品。是否继续？',
+      confirmText: '继续体验',
       success: (res) => {
         if (res.confirm) {
-          wx.navigateBack();
+          wx.navigateBack({ fail: () => {
+            wx.switchTab({ url: '/pages/home/home' });
+          }});
         }
       }
     });
   },
 
+  /**
+   * 显示用户协议
+   */
   showUserAgreement() {
     wx.showModal({
-      title: "用户协议",
-      content: "用户协议内容...",
-      showCancel: false
+      title: '用户协议',
+      content: '欢迎使用图文生成小程序！本协议包含使用条款、知识产权、用户行为规范等内容...',
+      showCancel: false,
+      confirmText: '我知道了'
     });
   },
 
+  /**
+   * 显示隐私政策
+   */
   showPrivacyPolicy() {
     wx.showModal({
-      title: "隐私政策",
-      content: "隐私政策内容...",
-      showCancel: false
+      title: '隐私政策',
+      content: '我们重视您的隐私保护。本政策说明我们如何收集、使用、存储您的个人信息...',
+      showCancel: false,
+      confirmText: '我知道了'
     });
   }
 });

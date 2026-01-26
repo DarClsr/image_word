@@ -1,150 +1,588 @@
 <template>
   <section class="page">
-    <n-space vertical size="large">
-      <n-page-header title="作品管理" subtitle="审核、下架与管理作品。" />
-      <n-card>
-        <n-space align="center" justify="space-between" wrap>
-          <n-space>
-            <n-input v-model:value="keyword" placeholder="搜索作品标题/作者" clearable />
-            <n-select v-model:value="statusFilter" :options="statusOptions" />
-          </n-space>
-          <n-space>
-            <n-button type="primary" :disabled="!checkedRowKeys.length" @click="batchApprove">
-              批量审核
-            </n-button>
-            <n-button :disabled="!checkedRowKeys.length" @click="batchDelete">批量删除</n-button>
-          </n-space>
+    <PageHeader title="作品管理" subtitle="查看、审核和管理用户生成的作品">
+      <n-space>
+        <n-button :disabled="selectedKeys.length === 0" @click="handleBatchAudit('approved')">
+          <template #icon>
+            <n-icon><CheckmarkCircleOutline /></n-icon>
+          </template>
+          批量通过
+        </n-button>
+        <n-button :disabled="selectedKeys.length === 0" type="error" @click="handleBatchDelete">
+          <template #icon>
+            <n-icon><TrashOutline /></n-icon>
+          </template>
+          批量删除
+        </n-button>
+      </n-space>
+    </PageHeader>
+
+    <!-- 搜索栏 -->
+    <n-card class="search-card" :bordered="false">
+      <n-form :model="queryParams" label-placement="left" :show-feedback="false">
+        <n-grid :x-gap="16" :y-gap="16" cols="1 s:2 m:4 l:5">
+          <n-gi>
+            <n-form-item label="关键词">
+              <n-input v-model:value="queryParams.keyword" placeholder="提示词/用户" clearable />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="风格">
+              <n-select v-model:value="queryParams.styleId" :options="styleOptions" placeholder="全部风格" clearable />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="状态">
+              <n-select v-model:value="queryParams.status" :options="statusOptions" placeholder="全部状态" clearable />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item label="时间">
+              <n-date-picker v-model:value="queryParams.dateRange" type="daterange" clearable style="width: 100%" />
+            </n-form-item>
+          </n-gi>
+          <n-gi class="search-actions">
+            <n-space>
+              <n-button type="primary" @click="handleSearch">
+                <template #icon>
+                  <n-icon><SearchOutline /></n-icon>
+                </template>
+                搜索
+              </n-button>
+              <n-button @click="handleReset">
+                <template #icon>
+                  <n-icon><RefreshOutline /></n-icon>
+                </template>
+                重置
+              </n-button>
+            </n-space>
+          </n-gi>
+        </n-grid>
+      </n-form>
+    </n-card>
+
+    <!-- 视图切换 -->
+    <n-card class="content-card" :bordered="false">
+      <template #header>
+        <n-space align="center">
+          <span>共 {{ pagination.total }} 条</span>
+          <n-divider vertical />
+          <n-radio-group v-model:value="viewMode" size="small">
+            <n-radio-button value="table">
+              <n-icon><ListOutline /></n-icon>
+            </n-radio-button>
+            <n-radio-button value="grid">
+              <n-icon><GridOutline /></n-icon>
+            </n-radio-button>
+          </n-radio-group>
         </n-space>
-      </n-card>
-      <n-card title="作品列表">
-        <n-data-table
-          :columns="columns"
-          :data="filteredData"
-          :bordered="false"
-          :row-key="rowKey"
-          checkable
-          v-model:checked-row-keys="checkedRowKeys"
-        />
-      </n-card>
-    </n-space>
+      </template>
+
+      <!-- 表格视图 -->
+      <n-data-table
+        v-if="viewMode === 'table'"
+        :columns="columns"
+        :data="dataList"
+        :loading="loading"
+        :pagination="paginationReactive"
+        :row-key="(row: Work) => row.id"
+        :checked-row-keys="selectedKeys"
+        striped
+        @update:checked-row-keys="handleSelectionChange"
+        @update:page="onPageChange"
+        @update:page-size="onPageSizeChange"
+      />
+
+      <!-- 卡片视图 -->
+      <div v-else class="works-grid">
+        <n-checkbox-group v-model:value="selectedKeys">
+          <n-grid :x-gap="16" :y-gap="16" cols="2 s:3 m:4 l:5 xl:6">
+            <n-gi v-for="item in dataList" :key="item.id">
+              <div class="work-card" @click="handleView(item)">
+                <n-checkbox :value="item.id" class="work-card__checkbox" @click.stop />
+                <div class="work-card__image">
+                  <img :src="item.thumbnailUrl" :alt="item.prompt" />
+                  <n-tag
+                    class="work-card__status"
+                    :type="getStatusType(item.status)"
+                    size="small"
+                  >
+                    {{ getStatusText(item.status) }}
+                  </n-tag>
+                </div>
+                <div class="work-card__info">
+                  <div class="work-card__prompt">{{ item.prompt }}</div>
+                  <div class="work-card__meta">
+                    <span>{{ item.styleName }}</span>
+                    <span>{{ formatRelativeTime(item.createdAt) }}</span>
+                  </div>
+                </div>
+                <div class="work-card__actions">
+                  <n-button text type="primary" size="small" @click.stop="handleAudit(item, 'approved')">
+                    通过
+                  </n-button>
+                  <n-button text type="error" size="small" @click.stop="handleAudit(item, 'rejected')">
+                    拒绝
+                  </n-button>
+                </div>
+              </div>
+            </n-gi>
+          </n-grid>
+        </n-checkbox-group>
+
+        <!-- 分页 -->
+        <div class="pagination-wrapper">
+          <n-pagination
+            v-model:page="pagination.page"
+            v-model:page-size="pagination.pageSize"
+            :item-count="pagination.total"
+            :page-sizes="[12, 24, 48]"
+            show-size-picker
+          />
+        </div>
+      </div>
+    </n-card>
+
+    <!-- 详情弹窗 -->
+    <n-modal
+      v-model:show="detailModal.visible"
+      preset="card"
+      title="作品详情"
+      style="width: 720px"
+    >
+      <div v-if="detailModal.data" class="work-detail">
+        <div class="work-detail__image">
+          <img :src="detailModal.data.imageUrl" :alt="detailModal.data.prompt" />
+        </div>
+        <n-descriptions :column="2" label-placement="left" bordered>
+          <n-descriptions-item label="作品 ID">{{ detailModal.data.id }}</n-descriptions-item>
+          <n-descriptions-item label="用户">{{ detailModal.data.userName }}</n-descriptions-item>
+          <n-descriptions-item label="风格">{{ detailModal.data.styleName }}</n-descriptions-item>
+          <n-descriptions-item label="模型">{{ detailModal.data.modelName }}</n-descriptions-item>
+          <n-descriptions-item label="尺寸">{{ detailModal.data.width }} × {{ detailModal.data.height }}</n-descriptions-item>
+          <n-descriptions-item label="状态">
+            <n-tag :type="getStatusType(detailModal.data.status)" size="small">
+              {{ getStatusText(detailModal.data.status) }}
+            </n-tag>
+          </n-descriptions-item>
+          <n-descriptions-item label="提示词" :span="2">{{ detailModal.data.prompt }}</n-descriptions-item>
+          <n-descriptions-item label="创建时间" :span="2">{{ formatDateTime(detailModal.data.createdAt) }}</n-descriptions-item>
+        </n-descriptions>
+      </div>
+      <template #footer>
+        <n-space justify="end">
+          <n-button @click="detailModal.visible = false">关闭</n-button>
+          <n-button type="primary" @click="handleAudit(detailModal.data!, 'approved')">通过</n-button>
+          <n-button type="error" @click="handleAudit(detailModal.data!, 'rejected')">拒绝</n-button>
+        </n-space>
+      </template>
+    </n-modal>
+
+    <!-- 审核弹窗 -->
+    <n-modal v-model:show="auditModal.visible" preset="dialog" :title="auditModal.title">
+      <n-form v-if="auditModal.status === 'rejected'">
+        <n-form-item label="拒绝原因">
+          <n-input
+            v-model:value="auditModal.reason"
+            type="textarea"
+            placeholder="请输入拒绝原因"
+            :autosize="{ minRows: 2, maxRows: 4 }"
+          />
+        </n-form-item>
+      </n-form>
+      <template v-else>
+        <p>确定要通过该作品的审核吗？</p>
+      </template>
+      <template #action>
+        <n-space justify="end">
+          <n-button @click="auditModal.visible = false">取消</n-button>
+          <n-button :type="auditModal.status === 'approved' ? 'primary' : 'error'" :loading="auditModal.loading" @click="handleAuditConfirm">
+            确定
+          </n-button>
+        </n-space>
+      </template>
+    </n-modal>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, h, ref } from 'vue';
-import type { DataTableColumns } from 'naive-ui';
-import { NButton, NCard, NDataTable, NInput, NPageHeader, NSelect, NSpace, NTag, useMessage } from 'naive-ui';
+import { ref, reactive, h } from 'vue';
+import {
+  NCard,
+  NForm,
+  NFormItem,
+  NGrid,
+  NGi,
+  NInput,
+  NSelect,
+  NDatePicker,
+  NButton,
+  NSpace,
+  NIcon,
+  NDataTable,
+  NModal,
+  NRadioGroup,
+  NRadioButton,
+  NTag,
+  NCheckbox,
+  NCheckboxGroup,
+  NPagination,
+  NDescriptions,
+  NDescriptionsItem,
+  NDivider,
+  useMessage,
+  type DataTableColumns,
+} from 'naive-ui';
+import {
+  SearchOutline,
+  RefreshOutline,
+  CheckmarkCircleOutline,
+  TrashOutline,
+  ListOutline,
+  GridOutline,
+  EyeOutline,
+} from '@vicons/ionicons5';
+import { PageHeader } from '@/components/Common';
+import type { Work } from '@/types/works';
+import { formatDateTime, formatRelativeTime } from '@/utils/format';
 
-interface WorkItem {
-  id: number;
-  title: string;
-  author: string;
-  model: string;
-  status: '待审' | '通过' | '驳回';
-  createdAt: string;
-}
-
-const keyword = ref('');
-const statusFilter = ref<'all' | '待审' | '通过' | '驳回'>('all');
-const checkedRowKeys = ref<number[]>([]);
 const message = useMessage();
 
-const statusOptions = [
-  { label: '全部状态', value: 'all' },
-  { label: '待审', value: '待审' },
-  { label: '通过', value: '通过' },
-  { label: '驳回', value: '驳回' },
-];
+/** 视图模式 */
+const viewMode = ref<'table' | 'grid'>('grid');
 
-const data = ref<WorkItem[]>([
-  { id: 1, title: '山水画风格日落', author: 'user_001', model: 'SDXL', status: '待审', createdAt: '2026-01-25' },
-  { id: 2, title: '赛博城市夜景', author: 'user_002', model: 'DALL·E', status: '通过', createdAt: '2026-01-24' },
-  { id: 3, title: '动漫人物半身像', author: 'user_003', model: 'SD 1.5', status: '驳回', createdAt: '2026-01-23' },
-]);
-
-const rowKey = (row: WorkItem) => row.id;
-
-const filteredData = computed(() => {
-  return data.value.filter((item) => {
-    const matchesKeyword = !keyword.value || item.title.includes(keyword.value) || item.author.includes(keyword.value);
-    const matchesStatus = statusFilter.value === 'all' || item.status === statusFilter.value;
-    return matchesKeyword && matchesStatus;
-  });
+/** 查询参数 */
+const queryParams = reactive({
+  keyword: '',
+  styleId: null as number | null,
+  status: null as string | null,
+  dateRange: null as [number, number] | null,
 });
 
-const updateStatus = (row: WorkItem, status: WorkItem['status']) => {
-  row.status = status;
-  message.success(`已更新为${status}`);
-};
+/** 风格选项 */
+const styleOptions = [
+  { label: '国风', value: 1 },
+  { label: '赛博朋克', value: 2 },
+  { label: '日漫', value: 3 },
+  { label: '写实', value: 4 },
+];
 
-const handleDelete = (row: WorkItem) => {
-  data.value = data.value.filter((item) => item.id !== row.id);
-  checkedRowKeys.value = checkedRowKeys.value.filter((key) => key !== row.id);
-  message.success('已删除作品');
-};
+/** 状态选项 */
+const statusOptions = [
+  { label: '待审核', value: 'pending' },
+  { label: '已通过', value: 'approved' },
+  { label: '已拒绝', value: 'rejected' },
+];
 
-const batchApprove = () => {
-  data.value.forEach((item) => {
-    if (checkedRowKeys.value.includes(item.id)) {
-      item.status = '通过';
-    }
-  });
-  message.success('批量审核完成');
-};
+/** 加载状态 */
+const loading = ref(false);
 
-const batchDelete = () => {
-  data.value = data.value.filter((item) => !checkedRowKeys.value.includes(item.id));
-  checkedRowKeys.value = [];
-  message.success('批量删除完成');
-};
+/** 选中项 */
+const selectedKeys = ref<number[]>([]);
 
-const columns: DataTableColumns<WorkItem> = [
-  { title: '作品标题', key: 'title' },
-  { title: '作者', key: 'author' },
-  { title: '模型', key: 'model' },
+/** 数据列表 */
+const dataList = ref<Work[]>([
+  { id: 1, userId: 101, userName: '张三', prompt: '春日樱花下的少女，粉色和服，微风吹拂', styleId: 3, styleName: '日漫', modelId: 1, modelName: 'SDXL', imageUrl: 'https://picsum.photos/seed/w1/800/800', thumbnailUrl: 'https://picsum.photos/seed/w1/200/200', width: 1024, height: 1024, status: 'pending', isPublic: false, viewCount: 0, downloadCount: 0, createdAt: '2026-01-26T08:30:00Z', updatedAt: '2026-01-26T08:30:00Z' },
+  { id: 2, userId: 102, userName: '李四', prompt: '赛博朋克城市夜景，霓虹灯光闪烁', styleId: 2, styleName: '赛博朋克', modelId: 1, modelName: 'SDXL', imageUrl: 'https://picsum.photos/seed/w2/800/800', thumbnailUrl: 'https://picsum.photos/seed/w2/200/200', width: 1024, height: 1024, status: 'approved', isPublic: true, viewCount: 156, downloadCount: 23, createdAt: '2026-01-26T07:20:00Z', updatedAt: '2026-01-26T07:20:00Z' },
+  { id: 3, userId: 103, userName: '王五', prompt: '山水画风格的现代都市，云雾缭绕', styleId: 1, styleName: '国风', modelId: 2, modelName: 'Flux', imageUrl: 'https://picsum.photos/seed/w3/800/800', thumbnailUrl: 'https://picsum.photos/seed/w3/200/200', width: 1024, height: 1024, status: 'approved', isPublic: true, viewCount: 89, downloadCount: 12, createdAt: '2026-01-26T06:15:00Z', updatedAt: '2026-01-26T06:15:00Z' },
+  { id: 4, userId: 104, userName: '赵六', prompt: '写实风格人像照片，自然光线柔和', styleId: 4, styleName: '写实', modelId: 1, modelName: 'SDXL', imageUrl: 'https://picsum.photos/seed/w4/800/800', thumbnailUrl: 'https://picsum.photos/seed/w4/200/200', width: 1024, height: 1024, status: 'rejected', isPublic: false, viewCount: 0, downloadCount: 0, createdAt: '2026-01-26T05:00:00Z', updatedAt: '2026-01-26T05:00:00Z' },
+  { id: 5, userId: 105, userName: '钱七', prompt: '梦幻森林精灵，蝴蝶环绕，魔法光芒', styleId: 3, styleName: '日漫', modelId: 2, modelName: 'Flux', imageUrl: 'https://picsum.photos/seed/w5/800/800', thumbnailUrl: 'https://picsum.photos/seed/w5/200/200', width: 1024, height: 1024, status: 'pending', isPublic: false, viewCount: 0, downloadCount: 0, createdAt: '2026-01-26T04:30:00Z', updatedAt: '2026-01-26T04:30:00Z' },
+  { id: 6, userId: 106, userName: '孙八', prompt: '极简主义建筑设计，几何线条', styleId: 1, styleName: '国风', modelId: 1, modelName: 'SDXL', imageUrl: 'https://picsum.photos/seed/w6/800/800', thumbnailUrl: 'https://picsum.photos/seed/w6/200/200', width: 1024, height: 1024, status: 'approved', isPublic: true, viewCount: 234, downloadCount: 45, createdAt: '2026-01-26T03:00:00Z', updatedAt: '2026-01-26T03:00:00Z' },
+]);
+
+/** 分页 */
+const pagination = reactive({
+  page: 1,
+  pageSize: 12,
+  total: 6,
+});
+
+const paginationReactive = reactive({
+  page: 1,
+  pageSize: 10,
+  showSizePicker: true,
+  pageSizes: [10, 20, 50],
+  itemCount: 6,
+  prefix: ({ itemCount }: { itemCount: number | undefined }) => `共 ${itemCount ?? 0} 条`,
+});
+
+/** 表格列 */
+const columns: DataTableColumns<Work> = [
+  { type: 'selection' },
+  { title: 'ID', key: 'id', width: 60 },
+  {
+    title: '缩略图',
+    key: 'thumbnailUrl',
+    width: 80,
+    render: (row) => h('img', { src: row.thumbnailUrl, style: { width: '48px', height: '48px', borderRadius: '6px', objectFit: 'cover' } }),
+  },
+  { title: '提示词', key: 'prompt', ellipsis: { tooltip: true } },
+  { title: '用户', key: 'userName', width: 80 },
+  { title: '风格', key: 'styleName', width: 100 },
   {
     title: '状态',
     key: 'status',
-    render(row) {
-      const type = row.status === '通过' ? 'success' : row.status === '驳回' ? 'error' : 'warning';
-      return h(NTag, { type, round: true, size: 'small' }, { default: () => row.status });
-    },
+    width: 90,
+    render: (row) => h(NTag, { type: getStatusType(row.status), size: 'small' }, () => getStatusText(row.status)),
   },
-  { title: '提交时间', key: 'createdAt' },
+  {
+    title: '创建时间',
+    key: 'createdAt',
+    width: 160,
+    render: (row) => formatDateTime(row.createdAt),
+  },
   {
     title: '操作',
     key: 'actions',
-    render(row) {
-      return h(
-        NSpace,
-        { size: 8 },
-        {
-          default: () => [
-            h(
-              NButton,
-              { size: 'small', type: 'success', onClick: () => updateStatus(row, '通过') },
-              { default: () => '通过' }
-            ),
-            h(
-              NButton,
-              { size: 'small', type: 'warning', onClick: () => updateStatus(row, '驳回') },
-              { default: () => '驳回' }
-            ),
-            h(
-              NButton,
-              { size: 'small', type: 'error', onClick: () => handleDelete(row) },
-              { default: () => '删除' }
-            ),
-          ],
-        }
-      );
-    },
+    width: 160,
+    fixed: 'right',
+    render: (row) =>
+      h(NSpace, { size: 'small' }, () => [
+        h(NButton, { text: true, type: 'info', onClick: () => handleView(row) }, { icon: () => h(NIcon, null, () => h(EyeOutline)), default: () => '查看' }),
+        h(NButton, { text: true, type: 'primary', onClick: () => handleAudit(row, 'approved') }, () => '通过'),
+        h(NButton, { text: true, type: 'error', onClick: () => handleAudit(row, 'rejected') }, () => '拒绝'),
+      ]),
   },
 ];
+
+/** 详情弹窗 */
+const detailModal = reactive({
+  visible: false,
+  data: null as Work | null,
+});
+
+/** 审核弹窗 */
+const auditModal = reactive({
+  visible: false,
+  loading: false,
+  title: '',
+  status: '' as 'approved' | 'rejected',
+  reason: '',
+  ids: [] as number[],
+});
+
+/** 获取状态类型 */
+const getStatusType = (status: string) => {
+  const map: Record<string, 'default' | 'success' | 'warning' | 'error'> = {
+    pending: 'warning',
+    approved: 'success',
+    rejected: 'error',
+  };
+  return map[status] || 'default';
+};
+
+/** 获取状态文本 */
+const getStatusText = (status: string) => {
+  const map: Record<string, string> = {
+    pending: '待审核',
+    approved: '已通过',
+    rejected: '已拒绝',
+  };
+  return map[status] || status;
+};
+
+/** 搜索 */
+const handleSearch = () => {
+  pagination.page = 1;
+};
+
+/** 重置 */
+const handleReset = () => {
+  queryParams.keyword = '';
+  queryParams.styleId = null;
+  queryParams.status = null;
+  queryParams.dateRange = null;
+  handleSearch();
+};
+
+/** 分页变化 */
+const onPageChange = (page: number) => {
+  pagination.page = page;
+};
+
+const onPageSizeChange = (pageSize: number) => {
+  pagination.pageSize = pageSize;
+  pagination.page = 1;
+};
+
+/** 选择变化 */
+const handleSelectionChange = (keys: Array<string | number>) => {
+  selectedKeys.value = keys.map((k) => Number(k));
+};
+
+/** 查看详情 */
+const handleView = (row: Work) => {
+  detailModal.visible = true;
+  detailModal.data = row;
+};
+
+/** 审核 */
+const handleAudit = (row: Work, status: 'approved' | 'rejected') => {
+  auditModal.visible = true;
+  auditModal.title = status === 'approved' ? '通过审核' : '拒绝审核';
+  auditModal.status = status;
+  auditModal.reason = '';
+  auditModal.ids = [row.id];
+};
+
+/** 批量审核 */
+const handleBatchAudit = (status: 'approved' | 'rejected') => {
+  if (selectedKeys.value.length === 0) return;
+  auditModal.visible = true;
+  auditModal.title = status === 'approved' ? `批量通过 (${selectedKeys.value.length}项)` : `批量拒绝 (${selectedKeys.value.length}项)`;
+  auditModal.status = status;
+  auditModal.reason = '';
+  auditModal.ids = [...selectedKeys.value];
+};
+
+/** 确认审核 */
+const handleAuditConfirm = () => {
+  if (auditModal.status === 'rejected' && !auditModal.reason) {
+    message.warning('请输入拒绝原因');
+    return;
+  }
+  auditModal.loading = true;
+  setTimeout(() => {
+    dataList.value = dataList.value.map((item) => {
+      if (auditModal.ids.includes(item.id)) {
+        return { ...item, status: auditModal.status };
+      }
+      return item;
+    });
+    auditModal.visible = false;
+    auditModal.loading = false;
+    detailModal.visible = false;
+    selectedKeys.value = [];
+    message.success('审核完成');
+  }, 500);
+};
+
+/** 批量删除 */
+const handleBatchDelete = () => {
+  if (selectedKeys.value.length === 0) return;
+  dataList.value = dataList.value.filter((item) => !selectedKeys.value.includes(item.id));
+  selectedKeys.value = [];
+  message.success('删除成功');
+};
 </script>
 
 <style scoped>
 .page {
   width: 100%;
+}
+
+.search-card {
+  margin-bottom: 16px;
+  border-radius: 12px;
+}
+
+.search-card :deep(.n-card__content) {
+  padding: 16px 20px;
+}
+
+.search-actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+.content-card {
+  border-radius: 12px;
+}
+
+.works-grid {
+  padding-top: 8px;
+}
+
+.work-card {
+  position: relative;
+  background: var(--color-bg-card, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.work-card:hover {
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12);
+}
+
+.work-card__checkbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+}
+
+.work-card__image {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.work-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.work-card:hover .work-card__image img {
+  transform: scale(1.05);
+}
+
+.work-card__status {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.work-card__info {
+  padding: 10px 12px 8px;
+}
+
+.work-card__prompt {
+  font-size: 13px;
+  color: var(--color-text, #111827);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.work-card__meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--color-muted, #9ca3af);
+  margin-top: 4px;
+}
+
+.work-card__actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 12px;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-bg-page, #f5f7f9);
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.work-detail__image {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.work-detail__image img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  background: #f5f5f5;
 }
 </style>

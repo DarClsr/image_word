@@ -13,11 +13,13 @@ export const setupRouterGuard = (router: Router) => {
       return next({ name: 'Login', query: { redirect: to.fullPath } });
     }
 
-    if (to.meta.roles && !authStore.hasRole(to.meta.roles)) {
+    const roles = to.meta.roles as string[] | undefined;
+    if (roles && !authStore.hasRole(roles)) {
       return next({ name: 'Dashboard' });
     }
 
-    if (to.meta.permissions && !authStore.hasPermission(to.meta.permissions)) {
+    const permissions = to.meta.permissions as string[] | undefined;
+    if (permissions && !authStore.hasPermission(permissions)) {
       return next({ name: 'Dashboard' });
     }
 

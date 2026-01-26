@@ -1,0 +1,138 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ==================== 代码检查 ====================
+  lint:
+    name: Lint Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies (Server)
+        run: npm ci
+        working-directory: ./server
+
+      - name: Install Dependencies (Admin)
+        run: npm ci
+        working-directory: ./admin
+
+      - name: Lint Server
+        run: npm run lint
+        working-directory: ./server
+
+      - name: Lint Admin
+        run: npm run lint
+        working-directory: ./admin
+
+  # ==================== 单元测试 ====================
+  test:
+    name: Unit Test
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ./server
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        working-directory: ./server
+
+      - name: Run Migrations
+        run: npx prisma migrate deploy
+        working-directory: ./server
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+
+      - name: Run Tests
+        run: npm run test:cov
+        working-directory: ./server
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret-key-for-ci-testing-only
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./server/coverage/lcov.info
+          fail_ci_if_error: true
+
+  # ==================== 构建检查 ====================
+  build:
+    name: Build Check
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Build Server
+        run: |
+          npm ci
+          npm run build
+        working-directory: ./server
+
+      - name: Build Admin
+        run: |
+          npm ci
+          npm run build
+        working-directory: ./admin

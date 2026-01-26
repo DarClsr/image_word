@@ -12,8 +12,9 @@
   "window": {
     "navigationBarTitleText": "图文生成",
     "navigationBarTextStyle": "white",
-    "navigationBarBackgroundColor": "#4C6FFF",
-    "backgroundTextStyle": "light"
+    "navigationBarBackgroundColor": "#3B82F6",
+    "backgroundColor": "#F5F9FF",
+    "backgroundTextStyle": "dark"
   },
   "tabBar": {
     "color": "#9CA3AF",
@@ -23,16 +24,33 @@
     "list": [
       {
         "pagePath": "pages/home/home",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "assets/icons/home.png",
+        "selectedIconPath": "assets/icons/home-active.png"
       },
       {
         "pagePath": "pages/templates/templates",
-        "text": "模板库"
+        "text": "模板库",
+        "iconPath": "assets/icons/home.png",
+        "selectedIconPath": "assets/icons/home-active.png"
       },
       {
         "pagePath": "pages/mine/mine",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "assets/icons/home.png",
+        "selectedIconPath": "assets/icons/home-active.png"
       }
     ]
-  }
+  },
+  "usingComponents": {
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-input": "tdesign-miniprogram/input/input",
+    "t-search": "tdesign-miniprogram/search/search",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-empty": "tdesign-miniprogram/empty/empty"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
 }

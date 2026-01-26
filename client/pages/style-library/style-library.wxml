@@ -1,18 +1,39 @@
 <view class="container">
-  <scroll-view scroll-x class="tabs" show-scrollbar="false">
-    <view class="tabs-inner">
-      <block wx:for="{{tabs}}" wx:key="name">
-        <t-tag class="tab-tag" theme="primary" variant="{{item.active ? 'dark' : 'light'}}" bindtap="onSwitchTab" data-name="{{item.name}}">{{item.name}}</t-tag>
+  <!-- 分类标签 -->
+  <scroll-view scroll-x class="tabs-scroll" enhanced show-scrollbar="{{false}}">
+    <view class="tabs-list">
+      <block wx:for="{{tabs}}" wx:key="id">
+        <view 
+          class="tab-item {{item.active ? 'active' : ''}}" 
+          bindtap="onSwitchTab" 
+          data-id="{{item.id}}"
+        >
+          <text class="tab-icon">{{item.icon}}</text>
+          <text class="tab-name">{{item.name}}</text>
+        </view>
       </block>
     </view>
   </scroll-view>
 
-  <view class="grid">
-    <block wx:for="{{styles}}" wx:key="name">
-      <view class="card style-card">
-        <view class="style-cover"></view>
-        <text class="style-name">{{item.name}}</text>
-        <text class="muted">{{item.desc}}</text>
+  <!-- 风格列表 -->
+  <view class="style-grid">
+    <block wx:for="{{styles}}" wx:key="id">
+      <view 
+        class="style-card fade-in" 
+        style="animation-delay: {{index * 0.05}}s;"
+        bindtap="selectStyle" 
+        data-id="{{item.id}}"
+      >
+        <view class="style-cover" style="background: {{item.gradient}};">
+          <text class="style-icon">{{item.icon}}</text>
+        </view>
+        <view class="style-content">
+          <text class="style-name">{{item.name}}</text>
+          <text class="style-desc">{{item.desc}}</text>
+        </view>
+        <view class="style-tags">
+          <view class="style-tag">{{item.count}} 模板</view>
+        </view>
       </view>
     </block>
   </view>

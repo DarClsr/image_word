@@ -1,39 +1,69 @@
 <view class="container">
   <!-- 搜索栏 -->
-  <view class="search-bar">
-    <t-search placeholder="搜索模板、提示词" bind:change="onSearch" />
+  <view class="search-wrapper fade-in">
+    <view class="search-box">
+      <text class="search-icon">🔍</text>
+      <input 
+        class="search-input" 
+        placeholder="搜索模板、提示词" 
+        placeholder-class="search-placeholder"
+        value="{{searchKeyword}}"
+        bindinput="onSearch"
+        confirm-type="search"
+      />
+      <view class="search-clear" wx:if="{{searchKeyword}}" bindtap="clearSearch">
+        <text>×</text>
+      </view>
+    </view>
   </view>
 
   <!-- 分类筛选 -->
-  <scroll-view scroll-x class="filter-scroll" show-scrollbar="{{false}}">
+  <scroll-view scroll-x class="filter-scroll" enhanced show-scrollbar="{{false}}">
     <view class="filter-list">
       <block wx:for="{{categories}}" wx:key="value">
-        <view class="filter-item {{currentCategory === item.value ? 'active' : ''}}" bindtap="onCategoryChange" data-value="{{item.value}}">
-          {{item.label}}
+        <view 
+          class="filter-item {{currentCategory === item.value ? 'active' : ''}}" 
+          bindtap="onCategoryChange" 
+          data-value="{{item.value}}"
+        >
+          <text class="filter-icon" wx:if="{{item.icon}}">{{item.icon}}</text>
+          <text>{{item.label}}</text>
         </view>
       </block>
     </view>
   </scroll-view>
 
   <!-- 模板列表 -->
-  <view class="template-grid">
+  <view class="template-list" wx:if="{{templates.length > 0}}">
     <block wx:for="{{templates}}" wx:key="id">
-      <view class="template-card" bindtap="onTemplateDetail" data-id="{{item.id}}">
-        <image class="template-image" src="{{item.imageUrl}}" mode="aspectFill" />
-        <view class="template-info">
-          <view class="template-prompt">{{item.prompt}}</view>
-          <view class="template-meta">
-            <view class="model-tag">{{item.model}}</view>
-            <view class="style-tag">{{item.style}}</view>
+      <view class="template-card fade-in" bindtap="onTemplateDetail" data-id="{{item.id}}" style="animation-delay: {{index * 0.05}}s;">
+        <view class="template-image-wrapper">
+          <image 
+            class="template-image" 
+            src="{{item.imageUrl || '/assets/images/placeholder.png'}}" 
+            mode="aspectFill" 
+            lazy-load
+          />
+          <view class="template-overlay">
+            <view class="template-action-btn">使用模板</view>
           </view>
-          <view class="template-stats">
-            <view class="stat-item">
-              <text class="stat-icon">♥</text>
-              <text>{{item.likes}}</text>
+        </view>
+        <view class="template-content">
+          <text class="template-prompt text-clamp-2">{{item.prompt}}</text>
+          <view class="template-meta">
+            <view class="template-tags">
+              <view class="meta-tag model">{{item.model}}</view>
+              <view class="meta-tag style">{{item.style}}</view>
             </view>
-            <view class="stat-item">
-              <text class="stat-icon">↗</text>
-              <text>{{item.shares}}</text>
+            <view class="template-stats">
+              <view class="stat">
+                <text class="stat-icon">❤️</text>
+                <text class="stat-num">{{item.likesText}}</text>
+              </view>
+              <view class="stat">
+                <text class="stat-icon">📤</text>
+                <text class="stat-num">{{item.sharesText}}</text>
+              </view>
             </view>
           </view>
         </view>
@@ -42,13 +72,22 @@
   </view>
 
   <!-- 加载状态 -->
-  <view class="loading-more" wx:if="{{loading}}">
-    <t-loading theme="circular" size="40rpx" text="加载中..." />
+  <view class="loading-wrapper" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
   </view>
+
+  <!-- 没有更多 -->
   <view class="no-more" wx:if="{{noMore && templates.length > 0}}">
-    <text class="muted">— 没有更多了 —</text>
+    <view class="no-more-line"></view>
+    <text class="no-more-text">没有更多了</text>
+    <view class="no-more-line"></view>
   </view>
-  <view class="empty" wx:if="{{!loading && templates.length === 0}}">
-    <t-empty description="暂无模板" />
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && templates.length === 0}}">
+    <text class="empty-icon">📭</text>
+    <text class="empty-text">暂无模板</text>
+    <text class="empty-hint">换个关键词试试吧</text>
   </view>
 </view>

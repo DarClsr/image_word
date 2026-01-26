@@ -1,103 +1,156 @@
 <view class="container">
-  <!-- 用户信息区 -->
-  <view class="user-card" wx:if="{{isLoggedIn}}">
-    <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
-    <view class="user-info">
-      <text class="nickname">{{userInfo.nickName}}</text>
-      <text class="user-id">ID: {{userInfo.id}}</text>
+  <!-- 用户信息卡片 -->
+  <view class="user-card fade-in" wx:if="{{isLoggedIn}}">
+    <view class="user-header">
+      <image class="avatar" src="{{userInfo.avatarUrl || '/assets/images/default-avatar.png'}}" mode="aspectFill" />
+      <view class="user-info">
+        <text class="nickname">{{userInfo.nickName || '用户'}}</text>
+        <view class="user-tags">
+          <view class="user-tag vip" wx:if="{{userInfo.memberType === 'pro'}}">
+            <text>👑 PRO会员</text>
+          </view>
+          <view class="user-tag" wx:elif="{{userInfo.memberType === 'basic'}}">
+            <text>⭐ 基础会员</text>
+          </view>
+          <view class="user-tag free" wx:else>
+            <text>免费用户</text>
+          </view>
+        </view>
+      </view>
+      <view class="edit-btn" bindtap="goEditProfile">
+        <text class="edit-icon">✏️</text>
+      </view>
     </view>
-    <view class="edit-btn" bindtap="goEditProfile">
-      <text>编辑</text>
+    
+    <!-- 额度信息 -->
+    <view class="quota-bar">
+      <view class="quota-info">
+        <text class="quota-label">剩余额度</text>
+        <text class="quota-value">{{stats.remainQuota}}</text>
+        <text class="quota-unit">次</text>
+      </view>
+      <view class="quota-btn" bindtap="goRecharge">
+        <text>充值</text>
+      </view>
     </view>
   </view>
-  <view class="user-card login-card" wx:else bindtap="goLogin">
-    <view class="avatar-placeholder">
-      <text>登录</text>
+
+  <!-- 未登录状态 -->
+  <view class="user-card login-card fade-in" wx:else bindtap="goLogin">
+    <view class="login-content">
+      <view class="avatar-placeholder">
+        <text class="avatar-icon">👤</text>
+      </view>
+      <view class="login-info">
+        <text class="login-title">点击登录</text>
+        <text class="login-hint">登录后解锁全部功能</text>
+      </view>
+      <text class="arrow">›</text>
     </view>
-    <view class="user-info">
-      <text class="nickname">点击登录</text>
-      <text class="user-id">登录后查看更多功能</text>
-    </view>
-    <text class="arrow">›</text>
   </view>
 
   <!-- 统计数据 -->
-  <view class="stats-card" wx:if="{{isLoggedIn}}">
+  <view class="stats-card fade-in" wx:if="{{isLoggedIn}}" style="animation-delay: 0.1s;">
     <view class="stat-item" bindtap="goWorks">
       <text class="stat-value">{{stats.works}}</text>
       <text class="stat-label">作品</text>
     </view>
+    <view class="stat-divider"></view>
     <view class="stat-item">
       <text class="stat-value">{{stats.likes}}</text>
       <text class="stat-label">获赞</text>
     </view>
+    <view class="stat-divider"></view>
     <view class="stat-item">
       <text class="stat-value">{{stats.shares}}</text>
       <text class="stat-label">分享</text>
     </view>
   </view>
 
-  <!-- 功能菜单 -->
-  <view class="menu-section">
-    <view class="section-title">我的内容</view>
+  <!-- 功能菜单 - 我的内容 -->
+  <view class="menu-section fade-in" style="animation-delay: 0.15s;">
+    <text class="menu-title">我的内容</text>
     <view class="menu-card">
       <view class="menu-item" bindtap="goWorks">
-        <text class="menu-icon">🎨</text>
+        <view class="menu-icon-wrapper" style="background: rgba(59, 130, 246, 0.1);">
+          <text class="menu-icon">🎨</text>
+        </view>
         <text class="menu-text">我的作品</text>
+        <view class="menu-badge" wx:if="{{stats.works > 0}}">{{stats.works}}</view>
         <text class="arrow">›</text>
       </view>
       <view class="menu-item" bindtap="goFavorites">
-        <text class="menu-icon">❤️</text>
+        <view class="menu-icon-wrapper" style="background: rgba(239, 68, 68, 0.1);">
+          <text class="menu-icon">❤️</text>
+        </view>
         <text class="menu-text">我的收藏</text>
         <text class="arrow">›</text>
       </view>
       <view class="menu-item" bindtap="goDrafts">
-        <text class="menu-icon">📝</text>
+        <view class="menu-icon-wrapper" style="background: rgba(245, 158, 11, 0.1);">
+          <text class="menu-icon">📝</text>
+        </view>
         <text class="menu-text">我的草稿</text>
         <text class="arrow">›</text>
       </view>
     </view>
   </view>
 
-  <view class="menu-section">
-    <view class="section-title">账户设置</view>
+  <!-- 功能菜单 - 账户设置 -->
+  <view class="menu-section fade-in" style="animation-delay: 0.2s;">
+    <text class="menu-title">账户设置</text>
     <view class="menu-card">
-      <view class="menu-item">
-        <text class="menu-icon">💎</text>
+      <view class="menu-item" bindtap="goPoints">
+        <view class="menu-icon-wrapper" style="background: rgba(139, 92, 246, 0.1);">
+          <text class="menu-icon">💎</text>
+        </view>
         <text class="menu-text">我的积分</text>
         <text class="menu-value">{{isLoggedIn ? stats.points : '--'}}</text>
         <text class="arrow">›</text>
       </view>
-      <view class="menu-item">
-        <text class="menu-icon">🔔</text>
+      <view class="menu-item" bindtap="goNotification">
+        <view class="menu-icon-wrapper" style="background: rgba(16, 185, 129, 0.1);">
+          <text class="menu-icon">🔔</text>
+        </view>
         <text class="menu-text">消息通知</text>
+        <view class="menu-dot" wx:if="{{hasUnread}}"></view>
         <text class="arrow">›</text>
       </view>
-      <view class="menu-item">
-        <text class="menu-icon">⚙️</text>
+      <view class="menu-item" bindtap="goSettings">
+        <view class="menu-icon-wrapper" style="background: rgba(107, 114, 128, 0.1);">
+          <text class="menu-icon">⚙️</text>
+        </view>
         <text class="menu-text">设置</text>
         <text class="arrow">›</text>
       </view>
     </view>
   </view>
 
-  <view class="menu-section">
+  <!-- 功能菜单 - 其他 -->
+  <view class="menu-section fade-in" style="animation-delay: 0.25s;">
     <view class="menu-card">
-      <view class="menu-item">
-        <text class="menu-icon">❓</text>
+      <view class="menu-item" bindtap="goHelp">
+        <view class="menu-icon-wrapper" style="background: rgba(59, 130, 246, 0.1);">
+          <text class="menu-icon">❓</text>
+        </view>
         <text class="menu-text">帮助与反馈</text>
         <text class="arrow">›</text>
       </view>
-      <view class="menu-item">
-        <text class="menu-icon">ℹ️</text>
+      <view class="menu-item" bindtap="goAbout">
+        <view class="menu-icon-wrapper" style="background: rgba(107, 114, 128, 0.1);">
+          <text class="menu-icon">ℹ️</text>
+        </view>
         <text class="menu-text">关于我们</text>
+        <text class="menu-version">v1.0.0</text>
         <text class="arrow">›</text>
       </view>
     </view>
   </view>
 
   <!-- 退出登录 -->
-  <view class="logout-btn" wx:if="{{isLoggedIn}}" bindtap="onLogout">
-    <text>退出登录</text>
+  <view class="logout-section fade-in" wx:if="{{isLoggedIn}}" style="animation-delay: 0.3s;">
+    <view class="logout-btn" bindtap="onLogout">
+      <text>退出登录</text>
+    </view>
   </view>
 </view>

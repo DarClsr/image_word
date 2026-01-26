@@ -1,44 +1,112 @@
-.tabs {
-  margin-bottom: 14px;
+/* 风格库页面样式 */
+
+/* 分类标签 */
+.tabs-scroll {
+  margin: 0 -20px var(--spacing-xl);
+  padding: 0 20px;
   white-space: nowrap;
 }
 
-.tabs-inner {
+.tabs-list {
   display: inline-flex;
-  gap: 10px;
-  padding-bottom: 2px;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) 0;
 }
 
-.tab-tag {
-  font-size: 12px;
-  padding: 6px 12px;
+.tab-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-full);
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  border: 2px solid transparent;
+  flex-shrink: 0;
 }
 
-.tab {
-  padding: 6px 12px;
-  background: #EAF2FF;
-  color: #3B82F6;
-  border-radius: 999px;
-  font-size: 12px;
+.tab-item:active {
+  transform: scale(0.98);
 }
 
-.tab.active {
-  background: #3B82F6;
-  color: #FFFFFF;
+.tab-item.active {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: var(--color-text-white);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.tab-icon {
+  font-size: 16px;
+}
+
+.tab-name {
+  font-weight: var(--font-medium);
+}
+
+/* 风格列表 */
+.style-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
 }
 
 .style-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+}
+
+.style-card:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-lg);
 }
 
 .style-cover {
-  height: 90px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #60A5FA, #93C5FD);
+  width: 100%;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.style-icon {
+  font-size: 36px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.style-content {
+  padding: var(--spacing-md);
 }
 
 .style-name {
-  font-weight: 600;
+  display: block;
+  font-size: var(--font-md);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.style-desc {
+  display: block;
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+}
+
+.style-tags {
+  padding: 0 var(--spacing-md) var(--spacing-md);
+}
+
+.style-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--color-primary-bg);
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
+  color: var(--color-primary);
 }

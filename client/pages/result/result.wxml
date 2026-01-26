@@ -1,37 +1,85 @@
-<view class="container">
-  <view class="card">
-    <image class="main-image" mode="aspectFill" src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800" />
+<view class="container result-container">
+  <!-- 主图预览 -->
+  <view class="main-image-section fade-in">
+    <view class="main-image-wrapper" bindtap="previewImage" data-index="0">
+      <image 
+        class="main-image" 
+        src="{{mainImage}}" 
+        mode="aspectFill"
+        show-menu-by-longpress
+      />
+      <view class="image-badge">
+        <text>{{currentIndex + 1}}/{{images.length}}</text>
+      </view>
+    </view>
   </view>
 
-  <view class="section-title">候选图</view>
-  <view class="grid">
-    <image class="thumb" mode="aspectFill" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400" />
-    <image class="thumb" mode="aspectFill" src="https://images.unsplash.com/photo-1482192505345-5655af888cc4?w=400" />
-    <image class="thumb" mode="aspectFill" src="https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?w=400" />
-    <image class="thumb" mode="aspectFill" src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400" />
+  <!-- 候选图 -->
+  <view class="thumbs-section fade-in" style="animation-delay: 0.1s;" wx:if="{{images.length > 1}}">
+    <text class="section-title" style="margin-top: 0;">候选图</text>
+    <scroll-view scroll-x class="thumbs-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="thumbs-list">
+        <block wx:for="{{images}}" wx:key="index">
+          <view 
+            class="thumb-item {{currentIndex === index ? 'active' : ''}}" 
+            bindtap="selectImage" 
+            data-index="{{index}}"
+          >
+            <image class="thumb-image" src="{{item}}" mode="aspectFill" />
+          </view>
+        </block>
+      </view>
+    </scroll-view>
   </view>
 
-  <view class="section-title">文案</view>
-  <view class="card">
-    <text class="muted">标题</text>
-    <text>冬日城市夜景海报</text>
-    <view style="height: 8px;"></view>
-    <text class="muted">摘要</text>
-    <text>霓虹与雪夜交织，展现城市的静谧与温度。</text>
-    <view style="height: 8px;"></view>
-    <text class="muted">标签</text>
-    <text>#冬日 #城市 #夜景 #海报</text>
+  <!-- 文案区域 -->
+  <view class="copy-section fade-in" style="animation-delay: 0.15s;">
+    <view class="section-header">
+      <text class="section-title" style="margin: 0;">文案</text>
+      <view class="copy-all-btn" bindtap="copyAllText">
+        <text class="copy-icon">📋</text>
+        <text>一键复制</text>
+      </view>
+    </view>
+    
+    <view class="card copy-card">
+      <view class="copy-item">
+        <text class="copy-label">标题</text>
+        <text class="copy-value" bindtap="copyText" data-type="title">{{copyText.title}}</text>
+      </view>
+      <view class="copy-item">
+        <text class="copy-label">摘要</text>
+        <text class="copy-value" bindtap="copyText" data-type="summary">{{copyText.summary}}</text>
+      </view>
+      <view class="copy-item">
+        <text class="copy-label">标签</text>
+        <view class="tags-wrapper">
+          <block wx:for="{{copyText.tags}}" wx:key="index">
+            <view class="tag" bindtap="copyText" data-type="tag" data-value="{{item}}">{{item}}</view>
+          </block>
+        </view>
+      </view>
+    </view>
   </view>
 
-  <view class="row" style="margin-top: 16px;">
-    <t-button class="btn-ghost" variant="outline" bind:tap="copyText">一键复制</t-button>
-    <view style="width: 12px;"></view>
-    <t-button class="btn-primary" theme="primary">下载</t-button>
-  </view>
-
-  <view class="row" style="margin-top: 12px;">
-    <t-button class="btn-ghost" variant="outline">再次生成</t-button>
-    <view style="width: 12px;"></view>
-    <t-button class="btn-primary" theme="primary">高清生成</t-button>
+  <!-- 操作按钮 -->
+  <view class="action-section fade-in safe-bottom" style="animation-delay: 0.2s;">
+    <view class="action-row">
+      <view class="btn-ghost action-btn" bindtap="regenerate">
+        <text class="btn-icon">🔄</text>
+        <text>再次生成</text>
+      </view>
+      <view class="btn-primary action-btn" bindtap="downloadImage">
+        <text class="btn-icon">💾</text>
+        <text>保存图片</text>
+      </view>
+    </view>
+    <view class="action-row mt-md">
+      <view class="btn-secondary action-btn full" bindtap="hdGenerate">
+        <text class="btn-icon">✨</text>
+        <text>高清生成</text>
+        <view class="hd-badge">HD</view>
+      </view>
+    </view>
   </view>
 </view>

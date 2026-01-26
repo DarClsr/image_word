@@ -1,15 +1,61 @@
-<view class="container">
-  <view class="card">
-    <text class="section-title">生成中</text>
-    <view class="progress">
-      <view class="progress-bar" style="width: {{progress}}%;"></view>
+<view class="container generating-container">
+  <!-- 生成动画 -->
+  <view class="generating-visual">
+    <view class="generating-ring">
+      <view class="ring ring-1"></view>
+      <view class="ring ring-2"></view>
+      <view class="ring ring-3"></view>
+      <view class="generating-icon">✨</view>
     </view>
-    <text class="muted">{{statusText}}</text>
   </view>
 
-  <view style="margin-top: 16px;" class="row" >
-    <t-button class="btn-ghost" variant="outline" bind:tap="goBack">后台运行</t-button>
-    <view style="width: 12px;"></view>
-    <t-button class="btn-primary" theme="primary" bind:tap="cancel">取消</t-button>
+  <!-- 进度信息 -->
+  <view class="progress-section fade-in">
+    <view class="progress-header">
+      <text class="progress-title">{{statusText}}</text>
+      <text class="progress-percent">{{progress}}%</text>
+    </view>
+    <view class="progress-bar-wrapper">
+      <view class="progress-bar" style="width: {{progress}}%;"></view>
+    </view>
+    <text class="progress-hint">{{progressHint}}</text>
+  </view>
+
+  <!-- 任务信息 -->
+  <view class="task-info card fade-in" style="animation-delay: 0.1s;">
+    <view class="task-row">
+      <text class="task-label">主题</text>
+      <text class="task-value text-ellipsis">{{params.topic || '--'}}</text>
+    </view>
+    <view class="task-row">
+      <text class="task-label">风格</text>
+      <text class="task-value">{{params.styleName || '--'}}</text>
+    </view>
+    <view class="task-row">
+      <text class="task-label">模型</text>
+      <text class="task-value">{{params.modelName || '--'}}</text>
+    </view>
+    <view class="task-row">
+      <text class="task-label">数量</text>
+      <text class="task-value">{{params.count || 1}} 张</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons fade-in" style="animation-delay: 0.2s;">
+    <view class="btn-ghost" bindtap="goBack">
+      <text class="btn-icon">↩️</text>
+      <text>后台运行</text>
+    </view>
+    <view class="btn-secondary" bindtap="cancel">
+      <text class="btn-icon">✕</text>
+      <text>取消生成</text>
+    </view>
+  </view>
+
+  <!-- 提示 -->
+  <view class="tips-section fade-in" style="animation-delay: 0.3s;">
+    <text class="tips-icon">💡</text>
+    <text class="tips-text">生成过程中可返回首页，完成后会通知您</text>
   </view>
 </view>

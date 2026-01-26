@@ -1,69 +1,125 @@
 <view class="container">
-  <view class="card hero-card">
-    <view class="row space-between">
-      <text class="section-title">主题</text>
-      <t-tag class="ai-tag" theme="primary" variant="light">AI 扩写</t-tag>
+  <!-- 主题输入卡片 -->
+  <view class="card-lg hero-card fade-in">
+    <view class="row space-between items-center">
+      <text class="section-title" style="margin: 0;">主题</text>
+      <view class="ai-expand-btn" bindtap="onAiExpand">
+        <text class="ai-icon">✨</text>
+        <text class="ai-text">AI 扩写</text>
+      </view>
     </view>
-    <t-input class="input" value="{{topic}}" placeholder="输入主题：如 春日校园海报" borderless bind:change="onTopicInput" />
-    <text class="muted" style="margin-top: 6px; display: block;">建议 6-20 个字，描述主体+场景+风格</text>
+    <view class="input-wrapper mt-md">
+      <t-input 
+        class="topic-input" 
+        value="{{topic}}" 
+        placeholder="输入主题：如 春日校园海报" 
+        maxlength="200"
+        borderless 
+        bind:change="onTopicInput" 
+      />
+    </view>
+    <text class="muted mt-sm" style="display: block;">建议 6-20 个字，描述主体 + 场景 + 风格</text>
   </view>
 
-  <view class="section-title">风格</view>
-  <scroll-view scroll-x class="style-scroll" show-scrollbar="false">
+  <!-- 风格选择 -->
+  <view class="section-title row space-between">
+    <text>风格</text>
+    <text class="link" bindtap="goStyleLibrary">查看全部 ›</text>
+  </view>
+  <scroll-view scroll-x class="style-scroll" enhanced show-scrollbar="{{false}}">
     <view class="style-list">
-      <block wx:for="{{styles}}" wx:key="name">
-        <view class="style-card {{item.selected ? 'selected' : ''}}" bindtap="onSelectStyle" data-name="{{item.name}}">
-          <view class="style-cover"></view>
+      <block wx:for="{{styles}}" wx:key="id">
+        <view 
+          class="style-card {{item.selected ? 'selected' : ''}}" 
+          bindtap="onSelectStyle" 
+          data-id="{{item.id}}"
+        >
+          <view class="style-cover" style="background: {{item.gradient || 'linear-gradient(135deg, #60A5FA, #93C5FD)'}};">
+            <text class="style-icon">{{item.icon}}</text>
+          </view>
           <text class="style-name">{{item.name}}</text>
         </view>
       </block>
     </view>
   </scroll-view>
-  <view class="row space-between" style="margin: 8px 0 0;">
-    <text class="muted">更多风格</text>
-    <text class="link" bindtap="goStyleLibrary">查看全部</text>
-  </view>
 
-  <view class="section-title">模型</view>
-  <view class="card">
-    <block wx:for="{{models}}" wx:key="name">
-      <view class="row space-between model-item {{selectedModel === item.name ? 'selected' : ''}}" bindtap="onSelectModel" data-name="{{item.name}}">
-        <view>
-          <text>{{item.name}}</text>
-          <view class="muted">{{item.desc}}</view>
+  <!-- 模型选择 -->
+  <text class="section-title">模型</text>
+  <view class="card model-card">
+    <block wx:for="{{models}}" wx:key="id">
+      <view 
+        class="model-item {{selectedModel === item.id ? 'selected' : ''}}" 
+        bindtap="onSelectModel" 
+        data-id="{{item.id}}"
+      >
+        <view class="model-info">
+          <view class="row items-center gap-sm">
+            <text class="model-name">{{item.name}}</text>
+            <view class="model-badge" wx:if="{{item.badge}}">{{item.badge}}</view>
+          </view>
+          <text class="model-desc">{{item.desc}}</text>
         </view>
-        <view>
-          <text class="tag">{{item.price}}</text>
-          <text class="tag">{{item.speed}}</text>
-          <text class="tag">{{item.quality}}</text>
+        <view class="model-tags">
+          <view class="model-tag price">{{item.price}}</view>
+          <view class="model-tag speed">{{item.speed}}</view>
+          <view class="model-tag quality">{{item.quality}}</view>
+        </view>
+        <view class="model-check" wx:if="{{selectedModel === item.id}}">
+          <text>✓</text>
         </view>
       </view>
     </block>
   </view>
 
-  <view class="section-title">高级设置</view>
-  <view class="card">
+  <!-- 高级设置 -->
+  <view class="section-title row space-between" bindtap="toggleAdvanced">
+    <text>高级设置</text>
+    <text class="arrow" style="transform: rotate({{showAdvanced ? 90 : 0}}deg); transition: transform 0.2s;">›</text>
+  </view>
+  <view class="card settings-card" wx:if="{{showAdvanced}}">
     <picker mode="selector" range="{{ratios}}" range-key="label" value="{{ratioIndex}}" bindchange="onRatioChange">
       <view class="setting-row">
-        <text class="setting-label">比例</text>
-        <view class="picker-value">
-          <text>{{ratios[ratioIndex].label}}</text>
+        <view class="setting-left">
+          <text class="setting-icon">📐</text>
+          <text class="setting-label">图片比例</text>
+        </view>
+        <view class="setting-right">
+          <text class="setting-value">{{ratios[ratioIndex].label}}</text>
           <text class="arrow">›</text>
         </view>
       </view>
     </picker>
     <picker mode="selector" range="{{counts}}" range-key="label" value="{{countIndex}}" bindchange="onCountChange">
       <view class="setting-row">
-        <text class="setting-label">数量</text>
-        <view class="picker-value">
-          <text>{{counts[countIndex].label}}</text>
+        <view class="setting-left">
+          <text class="setting-icon">🖼️</text>
+          <text class="setting-label">生成数量</text>
+        </view>
+        <view class="setting-right">
+          <text class="setting-value">{{counts[countIndex].label}}</text>
           <text class="arrow">›</text>
         </view>
       </view>
     </picker>
   </view>
 
-  <view style="margin-top: 16px;">
-    <t-button class="btn-primary" theme="primary" block bind:tap="goGenerating">立即生成</t-button>
+  <!-- 额度提示 -->
+  <view class="quota-tip mt-lg" wx:if="{{isLoggedIn}}">
+    <text class="quota-icon">💎</text>
+    <text class="quota-text">剩余额度：{{remainQuota}} 次</text>
+  </view>
+
+  <!-- 生成按钮 -->
+  <view class="generate-btn-wrapper mt-lg safe-bottom">
+    <t-button 
+      class="btn-primary btn-block btn-lg" 
+      theme="primary" 
+      block 
+      loading="{{generating}}"
+      disabled="{{generating || !topic}}"
+      bind:tap="goGenerating"
+    >
+      {{generating ? '生成中...' : '立即生成'}}
+    </t-button>
   </view>
 </view>
