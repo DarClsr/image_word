@@ -19,6 +19,7 @@ import { TaskModule } from './modules/task/task.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
 import { QueueModule } from './modules/queue/queue.module';
+import { AiModule } from './modules/ai/ai.module';
 
 // 配置验证
 import { validateEnv } from './config/env.validation';
@@ -65,6 +66,7 @@ import { validateEnv } from './config/env.validation';
     AdminModule,
     HealthModule,
     QueueModule,
+    AiModule,
   ],
 })
 export class AppModule {}

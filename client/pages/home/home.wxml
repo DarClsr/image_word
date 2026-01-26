@@ -1,125 +1,115 @@
-<view class="container">
-  <!-- 主题输入卡片 -->
-  <view class="card-lg hero-card fade-in">
-    <view class="row space-between items-center">
-      <text class="section-title" style="margin: 0;">主题</text>
-      <view class="ai-expand-btn" bindtap="onAiExpand">
-        <text class="ai-icon">✨</text>
-        <text class="ai-text">AI 扩写</text>
-      </view>
+<view class="container home-page">
+  <!-- 顶部 Banner -->
+  <view class="hero-section">
+    <view class="hero-bg"></view>
+    <view class="hero-content">
+      <text class="hero-title">AI 创作助手</text>
+      <text class="hero-subtitle">一键生成精美图文内容</text>
     </view>
-    <view class="input-wrapper mt-md">
-      <t-input 
-        class="topic-input" 
-        value="{{topic}}" 
-        placeholder="输入主题：如 春日校园海报" 
-        maxlength="200"
-        borderless 
-        bind:change="onTopicInput" 
-      />
-    </view>
-    <text class="muted mt-sm" style="display: block;">建议 6-20 个字，描述主体 + 场景 + 风格</text>
   </view>
 
-  <!-- 风格选择 -->
-  <view class="section-title row space-between">
-    <text>风格</text>
-    <text class="link" bindtap="goStyleLibrary">查看全部 ›</text>
+  <!-- 功能入口 -->
+  <view class="feature-section">
+    <!-- 图文生成（主推） -->
+    <view class="feature-card main-feature" bindtap="goImageText">
+      <view class="feature-icon-wrapper">
+        <text class="feature-icon">📝</text>
+        <view class="feature-badge hot">HOT</view>
+      </view>
+      <view class="feature-info">
+        <text class="feature-title">图文生成</text>
+        <text class="feature-desc">AI 自动生成小红书风格图文，支持金句、干货、清单等多种模板</text>
+      </view>
+      <view class="feature-arrow">
+        <text>›</text>
+      </view>
+    </view>
+
+    <!-- 图片生成（即将开放） -->
+    <view class="feature-card disabled-feature" bindtap="showComingSoon">
+      <view class="feature-icon-wrapper">
+        <text class="feature-icon">🎨</text>
+        <view class="feature-badge coming">即将开放</view>
+      </view>
+      <view class="feature-info">
+        <text class="feature-title">图片生成</text>
+        <text class="feature-desc">输入描述，AI 生成创意图片，支持多种风格和模型</text>
+      </view>
+      <view class="feature-arrow">
+        <text class="muted">›</text>
+      </view>
+      <view class="feature-mask"></view>
+    </view>
   </view>
-  <scroll-view scroll-x class="style-scroll" enhanced show-scrollbar="{{false}}">
-    <view class="style-list">
-      <block wx:for="{{styles}}" wx:key="id">
-        <view 
-          class="style-card {{item.selected ? 'selected' : ''}}" 
-          bindtap="onSelectStyle" 
-          data-id="{{item.id}}"
-        >
-          <view class="style-cover" style="background: {{item.gradient || 'linear-gradient(135deg, #60A5FA, #93C5FD)'}};">
-            <text class="style-icon">{{item.icon}}</text>
+
+  <!-- 快捷入口 -->
+  <view class="quick-section">
+    <text class="section-title">快捷创作</text>
+    <view class="quick-grid">
+      <view class="quick-item" bindtap="goImageTextWithTemplate" data-template="quote">
+        <text class="quick-icon">💬</text>
+        <text class="quick-name">金句语录</text>
+      </view>
+      <view class="quick-item" bindtap="goImageTextWithTemplate" data-template="tips">
+        <text class="quick-icon">💡</text>
+        <text class="quick-name">技巧干货</text>
+      </view>
+      <view class="quick-item" bindtap="goImageTextWithTemplate" data-template="list">
+        <text class="quick-icon">📝</text>
+        <text class="quick-name">清单合集</text>
+      </view>
+      <view class="quick-item" bindtap="goImageTextWithTemplate" data-template="knowledge">
+        <text class="quick-icon">🎓</text>
+        <text class="quick-name">知识科普</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近作品 -->
+  <view class="recent-section" wx:if="{{isLoggedIn && recentWorks.length}}">
+    <view class="section-header">
+      <text class="section-title">最近作品</text>
+      <text class="section-link" bindtap="goMyWorks">查看全部 ›</text>
+    </view>
+    <scroll-view scroll-x class="recent-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="recent-list">
+        <block wx:for="{{recentWorks}}" wx:key="id">
+          <view class="recent-item" bindtap="onPreviewWork" data-url="{{item.imageUrl}}">
+            <image class="recent-image" src="{{item.imageUrl}}" mode="aspectFill" />
           </view>
-          <text class="style-name">{{item.name}}</text>
+        </block>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 使用说明 -->
+  <view class="guide-section">
+    <text class="section-title">使用说明</text>
+    <view class="guide-steps">
+      <view class="guide-step">
+        <view class="step-number">1</view>
+        <view class="step-content">
+          <text class="step-title">输入主题</text>
+          <text class="step-desc">描述你想要的内容主题</text>
         </view>
-      </block>
+      </view>
+      <view class="guide-step">
+        <view class="step-number">2</view>
+        <view class="step-content">
+          <text class="step-title">选择模板</text>
+          <text class="step-desc">金句、干货、清单等多种风格</text>
+        </view>
+      </view>
+      <view class="guide-step">
+        <view class="step-number">3</view>
+        <view class="step-content">
+          <text class="step-title">AI 生成</text>
+          <text class="step-desc">自动生成文案并渲染成精美图片</text>
+        </view>
+      </view>
     </view>
-  </scroll-view>
-
-  <!-- 模型选择 -->
-  <text class="section-title">模型</text>
-  <view class="card model-card">
-    <block wx:for="{{models}}" wx:key="id">
-      <view 
-        class="model-item {{selectedModel === item.id ? 'selected' : ''}}" 
-        bindtap="onSelectModel" 
-        data-id="{{item.id}}"
-      >
-        <view class="model-info">
-          <view class="row items-center gap-sm">
-            <text class="model-name">{{item.name}}</text>
-            <view class="model-badge" wx:if="{{item.badge}}">{{item.badge}}</view>
-          </view>
-          <text class="model-desc">{{item.desc}}</text>
-        </view>
-        <view class="model-tags">
-          <view class="model-tag price">{{item.price}}</view>
-          <view class="model-tag speed">{{item.speed}}</view>
-          <view class="model-tag quality">{{item.quality}}</view>
-        </view>
-        <view class="model-check" wx:if="{{selectedModel === item.id}}">
-          <text>✓</text>
-        </view>
-      </view>
-    </block>
   </view>
 
-  <!-- 高级设置 -->
-  <view class="section-title row space-between" bindtap="toggleAdvanced">
-    <text>高级设置</text>
-    <text class="arrow" style="transform: rotate({{showAdvanced ? 90 : 0}}deg); transition: transform 0.2s;">›</text>
-  </view>
-  <view class="card settings-card" wx:if="{{showAdvanced}}">
-    <picker mode="selector" range="{{ratios}}" range-key="label" value="{{ratioIndex}}" bindchange="onRatioChange">
-      <view class="setting-row">
-        <view class="setting-left">
-          <text class="setting-icon">📐</text>
-          <text class="setting-label">图片比例</text>
-        </view>
-        <view class="setting-right">
-          <text class="setting-value">{{ratios[ratioIndex].label}}</text>
-          <text class="arrow">›</text>
-        </view>
-      </view>
-    </picker>
-    <picker mode="selector" range="{{counts}}" range-key="label" value="{{countIndex}}" bindchange="onCountChange">
-      <view class="setting-row">
-        <view class="setting-left">
-          <text class="setting-icon">🖼️</text>
-          <text class="setting-label">生成数量</text>
-        </view>
-        <view class="setting-right">
-          <text class="setting-value">{{counts[countIndex].label}}</text>
-          <text class="arrow">›</text>
-        </view>
-      </view>
-    </picker>
-  </view>
-
-  <!-- 额度提示 -->
-  <view class="quota-tip mt-lg" wx:if="{{isLoggedIn}}">
-    <text class="quota-icon">💎</text>
-    <text class="quota-text">剩余额度：{{remainQuota}} 次</text>
-  </view>
-
-  <!-- 生成按钮 -->
-  <view class="generate-btn-wrapper mt-lg safe-bottom">
-    <t-button 
-      class="btn-primary btn-block btn-lg" 
-      theme="primary" 
-      block 
-      loading="{{generating}}"
-      disabled="{{generating || !topic}}"
-      bind:tap="goGenerating"
-    >
-      {{generating ? '生成中...' : '立即生成'}}
-    </t-button>
-  </view>
+  <!-- 底部间距 -->
+  <view class="safe-bottom"></view>
 </view>

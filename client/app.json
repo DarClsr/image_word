@@ -7,7 +7,8 @@
     "pages/generating/generating",
     "pages/result/result",
     "pages/works/works",
-    "pages/login/login"
+    "pages/login/login",
+    "pages/image-text/image-text"
   ],
   "window": {
     "navigationBarTitleText": "图文生成",

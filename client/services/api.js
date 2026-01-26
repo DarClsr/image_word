@@ -176,11 +176,97 @@ export const userApi = {
   }
 };
 
+/**
+ * 生成配置接口
+ */
+export const generationApi = {
+  /**
+   * 获取生成配置（风格、模型、比例、数量）
+   */
+  getConfig() {
+    return request.get('/client/generation/config');
+  }
+};
+
+/**
+ * AI 提示词接口
+ */
+export const promptApi = {
+  /**
+   * AI 扩展提示词
+   * @param {Object} params - 参数
+   * @param {string} params.text - 原始文本
+   * @param {string} [params.style] - 风格名称
+   */
+  expand(params) {
+    return request.post('/client/prompt/expand', params, { 
+      showLoading: true, 
+      loadingText: 'AI 扩写中...' 
+    });
+  },
+
+  /**
+   * 优化提示词
+   * @param {Object} params - 参数
+   * @param {string} params.prompt - 原始提示词
+   * @param {string} [params.style] - 风格名称
+   */
+  optimize(params) {
+    return request.post('/client/prompt/optimize', params);
+  }
+};
+
+/**
+ * 图文生成接口 - AI 直接生成带文字的图片
+ */
+export const imageTextApi = {
+  /**
+   * AI 生成图文
+   * @param {Object} params - 参数
+   * @param {string} params.topic - 主题
+   * @param {string} params.template - 模板类型：quote/tips/list/story/knowledge/poster/card
+   * @param {string} [params.style] - 风格：xiaohongshu/minimal/gradient/magazine/retro/cute
+   * @param {string} [params.ratio] - 比例：1:1/3:4/4:3/9:16
+   * @param {string} [params.model] - AI 模型：ideogram/flux/jimeng
+   */
+  generate(params) {
+    return request.post('/client/image-text/generate', params, {
+      showLoading: true,
+      loadingText: 'AI 生成中...',
+      timeout: 60000, // 图片生成可能需要较长时间
+    });
+  },
+
+  /**
+   * 获取模板列表
+   */
+  getTemplates() {
+    return request.get('/client/image-text/templates');
+  },
+
+  /**
+   * 获取风格列表
+   */
+  getStyles() {
+    return request.get('/client/image-text/styles');
+  },
+
+  /**
+   * 获取可用的 AI 模型
+   */
+  getModels() {
+    return request.get('/client/image-text/models');
+  }
+};
+
 export default {
   auth: authApi,
   category: categoryApi,
   works: worksApi,
   task: taskApi,
   template: templateApi,
-  user: userApi
+  user: userApi,
+  generation: generationApi,
+  prompt: promptApi,
+  imageText: imageTextApi
 };

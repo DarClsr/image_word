@@ -1,0 +1,170 @@
+<view class="container image-text-page">
+  <!-- 输入区域 -->
+  <view class="card input-card">
+    <view class="input-header">
+      <text class="label">输入主题</text>
+      <text class="hint">AI 将自动生成文案并渲染成图片</text>
+    </view>
+    <t-textarea
+      class="topic-textarea"
+      value="{{topic}}"
+      placeholder="例如：如何保持自律、早起的好处、读书笔记..."
+      maxlength="100"
+      autosize
+      bind:change="onTopicInput"
+    />
+  </view>
+
+  <!-- 模板选择 -->
+  <view class="section">
+    <text class="section-title">选择模板</text>
+    <scroll-view scroll-x class="option-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="option-list">
+        <block wx:for="{{templates}}" wx:key="id">
+          <view 
+            class="option-item {{selectedTemplate === item.id ? 'selected' : ''}}"
+            bindtap="onSelectTemplate"
+            data-id="{{item.id}}"
+          >
+            <text class="option-icon">{{item.icon}}</text>
+            <text class="option-name">{{item.name}}</text>
+          </view>
+        </block>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 风格选择 -->
+  <view class="section">
+    <text class="section-title">选择风格</text>
+    <view class="tag-list">
+      <block wx:for="{{styles}}" wx:key="id">
+        <view 
+          class="tag-item {{selectedStyle === item.id ? 'selected' : ''}}"
+          bindtap="onSelectStyle"
+          data-id="{{item.id}}"
+        >
+          <text>{{item.name}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 图片比例 -->
+  <view class="section">
+    <text class="section-title">图片比例</text>
+    <view class="ratio-list">
+      <block wx:for="{{ratios}}" wx:key="id">
+        <view 
+          class="ratio-item {{selectedRatio === item.id ? 'selected' : ''}}"
+          bindtap="onSelectRatio"
+          data-id="{{item.id}}"
+        >
+          <text class="ratio-icon">{{item.icon}}</text>
+          <text class="ratio-name">{{item.name}}</text>
+          <text class="ratio-value">{{item.id}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- AI 模型选择 -->
+  <view class="section">
+    <text class="section-title">AI 模型</text>
+    <view class="model-list">
+      <block wx:for="{{models}}" wx:key="id">
+        <view 
+          class="model-item {{selectedModel === item.id ? 'selected' : ''}}"
+          bindtap="onSelectModel"
+          data-id="{{item.id}}"
+        >
+          <view class="model-info">
+            <text class="model-name">{{item.name}}</text>
+            <view class="model-quality">
+              <text wx:for="{{item.textQuality}}" wx:key="*this" wx:for-item="star">⭐</text>
+            </view>
+          </view>
+          <text class="model-desc">{{item.description}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 生成按钮 -->
+  <view class="generate-section">
+    <t-button
+      class="btn-primary btn-block"
+      theme="primary"
+      block
+      loading="{{loading}}"
+      disabled="{{loading || !topic}}"
+      bind:tap="onGenerate"
+    >
+      {{loading ? 'AI 生成中...' : '✨ 生成图文'}}
+    </t-button>
+    <text class="generate-tip" wx:if="{{loading}}">生成时间约 10-30 秒，请耐心等待</text>
+  </view>
+
+  <!-- 生成结果 -->
+  <view class="result-section" wx:if="{{result}}">
+    <view class="result-header">
+      <text class="result-title">生成结果</text>
+      <view class="result-actions">
+        <text class="action-btn" bindtap="onRegenerate">🔄 重新生成</text>
+      </view>
+    </view>
+
+    <!-- 图片展示 -->
+    <view class="image-wrapper" bindtap="onPreviewImage">
+      <image 
+        class="result-image" 
+        src="{{result.imageUrl}}" 
+        mode="widthFix"
+        show-menu-by-longpress
+      />
+      <view class="image-overlay">
+        <text class="overlay-text">点击预览</text>
+      </view>
+    </view>
+
+    <!-- 文案内容 -->
+    <view class="content-card" wx:if="{{result.content}}">
+      <text class="content-title">{{result.content.title}}</text>
+      <text class="content-subtitle" wx:if="{{result.content.subtitle}}">{{result.content.subtitle}}</text>
+      <view class="content-body">
+        <block wx:if="{{result.content.body.constructor === Array}}">
+          <view wx:for="{{result.content.body}}" wx:key="index" class="content-item">
+            {{index + 1}}. {{item}}
+          </view>
+        </block>
+        <block wx:else>
+          <text>{{result.content.body}}</text>
+        </block>
+      </view>
+      <view class="content-tags" wx:if="{{result.content.tags.length}}">
+        <text wx:for="{{result.content.tags}}" wx:key="index" class="tag">#{{item}}</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons">
+      <t-button
+        class="btn-action"
+        theme="primary"
+        variant="outline"
+        icon="download"
+        bind:tap="onSave"
+      >
+        保存图片
+      </t-button>
+      <t-button
+        class="btn-action"
+        theme="primary"
+        open-type="share"
+        icon="share"
+      >
+        分享好友
+      </t-button>
+    </view>
+  </view>
+</view>

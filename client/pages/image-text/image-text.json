@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "图文生成",
+  "usingComponents": {
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-textarea": "tdesign-miniprogram/textarea/textarea",
+    "t-loading": "tdesign-miniprogram/loading/loading"
+  }
+}
