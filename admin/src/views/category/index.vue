@@ -287,6 +287,7 @@ const formData = reactive({
   icon: '',
   cover: '',
   description: '',
+  parentId:0,
   sort: 0,
   status: 1 as 0 | 1,
 });
@@ -355,6 +356,7 @@ const handleEdit = (row: Category) => {
     icon: row.icon || '',
     cover: row.cover || '',
     description: row.description || '',
+    parentId: row.parentId,
     sort: row.sort,
     status: row.status,
   });
@@ -397,9 +399,9 @@ const handleSubmit = async () => {
             icon: formData.icon,
             cover: formData.cover,
             description: formData.description,
+            parentId: formData.parentId,
             sort: formData.sort,
             status: formData.status,
-            parentId: existing.parentId,
             createdAt: existing.createdAt,
             updatedAt: new Date().toISOString(),
           };
@@ -438,6 +440,7 @@ const resetForm = () => {
   formData.icon = '';
   formData.cover = '';
   formData.description = '';
+  formData.parentId = 0;
   formData.sort = 0;
   formData.status = 1;
 };
