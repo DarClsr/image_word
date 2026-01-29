@@ -1,6 +1,8 @@
 /**
  * 图文生成小程序 - 全局应用
  */
+import { authApi } from './services/api';
+
 App({
   /**
    * 全局数据
@@ -12,6 +14,8 @@ App({
     isLoggedIn: false,
     /** Token */
     token: null,
+    /** Refresh Token */
+    refreshToken: null,
     /** 系统信息 */
     systemInfo: null,
     /** 状态栏高度 */
@@ -30,8 +34,8 @@ App({
   onLaunch() {
     // 初始化系统信息
     this.initSystemInfo();
-    // 检查登录状态
-    this.checkLoginStatus();
+    // 恢复登录状态
+    this.restoreLoginStatus();
     // 检查更新
     this.checkUpdate();
   },
@@ -58,20 +62,73 @@ App({
   },
 
   /**
-   * 检查登录状态
+   * 恢复登录状态（从本地存储）
    */
-  checkLoginStatus() {
+  restoreLoginStatus() {
     const token = wx.getStorageSync('token');
+    const refreshToken = wx.getStorageSync('refreshToken');
     const userInfo = wx.getStorageSync('userInfo');
     
     if (token) {
       this.globalData.token = token;
+      this.globalData.refreshToken = refreshToken || null;
       this.globalData.isLoggedIn = true;
       this.globalData.userInfo = userInfo || null;
+      
+      // 尝试刷新用户信息
+      this.refreshUserProfile();
     } else {
       this.globalData.token = null;
+      this.globalData.refreshToken = null;
       this.globalData.isLoggedIn = false;
       this.globalData.userInfo = null;
+    }
+  },
+
+  /**
+   * 刷新用户信息
+   */
+  async refreshUserProfile() {
+    if (!this.globalData.isLoggedIn) return;
+    
+    try {
+      const profile = await authApi.getProfile();
+      this.globalData.userInfo = {
+        ...this.globalData.userInfo,
+        ...profile,
+      };
+      wx.setStorageSync('userInfo', this.globalData.userInfo);
+    } catch (error) {
+      console.error('刷新用户信息失败:', error);
+      // 如果获取失败可能是 token 过期，尝试刷新 token
+      if (error.code === 401 || error.code === 2001) {
+        await this.refreshAccessToken();
+      }
+    }
+  },
+
+  /**
+   * 刷新 Access Token
+   */
+  async refreshAccessToken() {
+    const refreshToken = this.globalData.refreshToken;
+    if (!refreshToken) {
+      this.clearLoginStatus();
+      return false;
+    }
+    
+    try {
+      const res = await authApi.refreshToken(refreshToken);
+      this.setLoginStatus({
+        token: res.accessToken,
+        refreshToken: res.refreshToken,
+        userInfo: res.user,
+      });
+      return true;
+    } catch (error) {
+      console.error('刷新 Token 失败:', error);
+      this.clearLoginStatus();
+      return false;
     }
   },
 
@@ -79,14 +136,19 @@ App({
    * 设置登录状态
    * @param {Object} params - 登录参数
    * @param {string} params.token - 登录 Token
+   * @param {string} params.refreshToken - 刷新 Token
    * @param {Object} params.userInfo - 用户信息
    */
-  setLoginStatus({ token, userInfo }) {
+  setLoginStatus({ token, refreshToken, userInfo }) {
     this.globalData.token = token;
+    this.globalData.refreshToken = refreshToken || null;
     this.globalData.isLoggedIn = true;
     this.globalData.userInfo = userInfo;
     
     wx.setStorageSync('token', token);
+    if (refreshToken) {
+      wx.setStorageSync('refreshToken', refreshToken);
+    }
     wx.setStorageSync('userInfo', userInfo);
   },
 
@@ -95,10 +157,12 @@ App({
    */
   clearLoginStatus() {
     this.globalData.token = null;
+    this.globalData.refreshToken = null;
     this.globalData.isLoggedIn = false;
     this.globalData.userInfo = null;
     
     wx.removeStorageSync('token');
+    wx.removeStorageSync('refreshToken');
     wx.removeStorageSync('userInfo');
   },
 

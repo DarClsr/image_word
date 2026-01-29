@@ -18,7 +18,7 @@
           <n-input v-model:value="form.password" type="password" placeholder="••••••" show-password-on="click" />
         </n-form-item>
         <n-space vertical size="large">
-          <n-button class="login__submit" type="primary" size="large" block @click="handleLogin">
+          <n-button class="login__submit" type="primary" size="large" block :loading="loading" @click="handleLogin">
             登录
           </n-button>
         </n-space>
@@ -28,32 +28,51 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { ref, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { NButton, NCard, NForm, NFormItem, NInput, NSpace, NText, useMessage } from 'naive-ui';
 import { useAuthStore } from '@/store/modules/auth';
+import { login } from '@/api/auth';
 
 const router = useRouter();
 const route = useRoute();
 const message = useMessage();
 const authStore = useAuthStore();
+const loading = ref(false);
 
 const form = reactive({
   username: '',
   password: '',
 });
 
-const handleLogin = () => {
+const handleLogin = async () => {
   if (!form.username || !form.password) {
     message.warning('请输入账号与密码');
     return;
   }
-  authStore.setToken('demo-token');
-  authStore.setRoles(['admin']);
-  authStore.setPermissions(['dashboard', 'category', 'works', 'user', 'system']);
-  message.success('登录成功');
-  const redirect = (route.query.redirect as string) || '/';
-  router.replace(redirect);
+
+  loading.value = true;
+  try {
+    const res = await login({
+      username: form.username,
+      password: form.password,
+    });
+
+    // 保存登录信息
+    authStore.setLoginInfo({
+      accessToken: res.accessToken,
+      refreshToken: res.refreshToken,
+      admin: res.admin,
+    });
+
+    message.success('登录成功');
+    const redirect = (route.query.redirect as string) || '/';
+    router.replace(redirect);
+  } catch (error: any) {
+    message.error(error?.message || '登录失败，请检查账号密码');
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 

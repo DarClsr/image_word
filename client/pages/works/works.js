@@ -1,6 +1,7 @@
 /**
  * 我的作品页面
  */
+import { worksApi } from '../../services/api';
 import { formatRelativeTime } from '../../utils/index';
 
 const app = getApp();
@@ -11,7 +12,8 @@ Page({
     loading: false,
     noMore: false,
     page: 1,
-    pageSize: 10
+    pageSize: 10,
+    total: 0,
   },
 
   onLoad() {
@@ -22,6 +24,7 @@ Page({
     // 检查是否需要刷新
     if (app.globalData.needRefreshWorks) {
       app.globalData.needRefreshWorks = false;
+      this.setData({ page: 1, noMore: false });
       this.loadWorks();
     }
   },
@@ -42,62 +45,71 @@ Page({
   /**
    * 加载作品列表
    */
-  loadWorks() {
+  async loadWorks() {
+    if (!app.globalData.isLoggedIn) {
+      this.setData({ items: [], loading: false });
+      return;
+    }
+
     this.setData({ loading: true });
     
-    // TODO: 调用真实 API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // 模拟数据
-        const mockData = [
-          {
-            id: '1',
-            imageUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400',
-            prompt: '冬日城市夜景，霓虹灯光',
-            status: 'approved',
-            createdAt: Date.now() - 3600000
-          },
-          {
-            id: '2',
-            imageUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400',
-            prompt: '春日樱花下的少女，国风水墨画风格',
-            status: 'pending',
-            createdAt: Date.now() - 7200000
-          },
-          {
-            id: '3',
-            imageUrl: 'https://images.unsplash.com/photo-1482192505345-5655af888cc4?w=400',
-            prompt: '赛博朋克城市，霓虹闪烁',
-            status: 'approved',
-            createdAt: Date.now() - 86400000
-          }
-        ];
-        
-        const items = mockData.map(item => ({
-          ...item,
-          timeText: formatRelativeTime(item.createdAt)
-        }));
-        
-        this.setData({
-          items,
-          loading: false
-        });
-        resolve();
-      }, 500);
-    });
+    try {
+      const res = await worksApi.getMyWorks({
+        page: 1,
+        pageSize: this.data.pageSize,
+      });
+      
+      const items = (res.list || []).map(item => ({
+        ...item,
+        timeText: formatRelativeTime(new Date(item.createdAt).getTime()),
+      }));
+      
+      this.setData({
+        items,
+        page: 1,
+        total: res.total || 0,
+        noMore: items.length >= (res.total || 0),
+        loading: false,
+      });
+    } catch (error) {
+      console.error('加载作品失败:', error);
+      app.showError(error.message || '加载失败');
+      this.setData({ loading: false });
+    }
   },
 
   /**
    * 加载更多
    */
-  loadMoreWorks() {
+  async loadMoreWorks() {
+    if (!app.globalData.isLoggedIn) return;
+
     const nextPage = this.data.page + 1;
-    this.setData({ loading: true, page: nextPage });
+    this.setData({ loading: true });
     
-    // TODO: 调用真实 API
-    setTimeout(() => {
-      this.setData({ loading: false, noMore: true });
-    }, 500);
+    try {
+      const res = await worksApi.getMyWorks({
+        page: nextPage,
+        pageSize: this.data.pageSize,
+      });
+      
+      const newItems = (res.list || []).map(item => ({
+        ...item,
+        timeText: formatRelativeTime(new Date(item.createdAt).getTime()),
+      }));
+      
+      const allItems = [...this.data.items, ...newItems];
+      
+      this.setData({
+        items: allItems,
+        page: nextPage,
+        noMore: allItems.length >= (res.total || 0),
+        loading: false,
+      });
+    } catch (error) {
+      console.error('加载更多失败:', error);
+      this.setData({ loading: false });
+    }
   },
 
   /**
@@ -120,7 +132,7 @@ Page({
    */
   shareWork(e) {
     const id = e.currentTarget.dataset.id;
-    // TODO: 实现分享功能
+    // 可以跳转到作品详情页进行分享
     app.showError('分享功能开发中');
   },
 
@@ -134,12 +146,17 @@ Page({
       title: '删除作品',
       content: '确定要删除这个作品吗？删除后无法恢复',
       confirmColor: '#EF4444',
-      success: (res) => {
+      success: async (res) => {
         if (res.confirm) {
-          // TODO: 调用删除 API
-          const items = this.data.items.filter(w => w.id !== id);
-          this.setData({ items });
-          app.showSuccess('已删除');
+          try {
+            await worksApi.delete(id);
+            const items = this.data.items.filter(w => w.id !== id);
+            this.setData({ items, total: this.data.total - 1 });
+            app.showSuccess('已删除');
+          } catch (error) {
+            console.error('删除失败:', error);
+            app.showError(error.message || '删除失败');
+          }
         }
       }
     });

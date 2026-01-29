@@ -1,12 +1,17 @@
 /**
  * 首页 - 功能入口
  */
+import { worksApi, userApi } from '../../services/api';
+
 const app = getApp();
 
 Page({
   data: {
     isLoggedIn: false,
+    userInfo: null,
     recentWorks: [],
+    remainQuota: 0,
+    loading: false,
   },
 
   onLoad() {
@@ -15,7 +20,9 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
-    this.loadRecentWorks();
+    if (app.globalData.isLoggedIn) {
+      this.loadUserData();
+    }
   },
 
   /**
@@ -23,22 +30,42 @@ Page({
    */
   checkLoginStatus() {
     const isLoggedIn = app.globalData.isLoggedIn;
-    this.setData({ isLoggedIn });
+    const userInfo = app.globalData.userInfo;
+    this.setData({ isLoggedIn, userInfo });
   },
 
   /**
-   * 加载最近作品
+   * 加载用户数据（作品 + 额度）
    */
-  async loadRecentWorks() {
-    if (!app.globalData.isLoggedIn) return;
+  async loadUserData() {
+    if (this.data.loading) return;
+    
+    this.setData({ loading: true });
     
     try {
-      // TODO: 调用 API 获取最近作品
-      // const res = await worksApi.getMyWorks({ pageSize: 6 });
-      // this.setData({ recentWorks: res.list || [] });
+      // 并行加载最近作品和额度信息
+      const [worksRes, quotaRes] = await Promise.all([
+        worksApi.getMyWorks({ page: 1, pageSize: 6 }).catch(() => ({ list: [] })),
+        userApi.getQuota().catch(() => ({ remainQuota: 0 })),
+      ]);
+      
+      this.setData({
+        recentWorks: worksRes.list || [],
+        remainQuota: quotaRes.remainQuota || 0,
+      });
     } catch (error) {
-      console.error('加载作品失败:', error);
+      console.error('加载数据失败:', error);
+    } finally {
+      this.setData({ loading: false });
     }
+  },
+
+  /**
+   * 下拉刷新
+   */
+  async onPullDownRefresh() {
+    await this.loadUserData();
+    wx.stopPullDownRefresh();
   },
 
   /**

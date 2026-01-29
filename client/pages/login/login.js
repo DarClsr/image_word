@@ -1,11 +1,14 @@
 /**
  * 登录页面
  */
+import { authApi } from '../../services/api';
+
 const app = getApp();
 
 Page({
   data: {
-    agreed: false
+    agreed: false,
+    loading: false,
   },
 
   /**
@@ -34,7 +37,7 @@ Page({
     
     if (e.detail.errMsg === 'getPhoneNumber:ok') {
       const { code } = e.detail;
-      this.doLogin({ type: 'phone', code });
+      this.doLogin({ type: 'phone', phoneCode: code });
     } else {
       app.showError('获取手机号失败');
     }
@@ -84,36 +87,48 @@ Page({
   /**
    * 执行登录
    */
-  doLogin(params) {
+  async doLogin(params) {
+    if (this.data.loading) return;
+    
+    this.setData({ loading: true });
     app.showLoading('登录中...');
     
-    // TODO: 调用真实登录 API
-    // const res = await authApi.wechatLogin(params);
-    
-    // 模拟登录成功
-    setTimeout(() => {
-      app.hideLoading();
+    try {
+      // 调用登录 API
+      const res = await authApi.wechatLogin({
+        code: params.code,
+        userInfo: params.userInfo ? {
+          nickName: params.userInfo.nickName,
+          avatarUrl: params.userInfo.avatarUrl,
+          gender: params.userInfo.gender,
+        } : undefined,
+      });
       
       // 保存登录状态
-      const token = 'mock_token_' + Date.now();
-      const userInfo = {
-        id: '10001',
-        nickName: params.userInfo?.nickName || '微信用户',
-        avatarUrl: params.userInfo?.avatarUrl || '',
-        memberType: 'free'
-      };
+      app.setLoginStatus({
+        token: res.accessToken,
+        refreshToken: res.refreshToken,
+        userInfo: res.user,
+      });
       
-      app.setLoginStatus({ token, userInfo });
-      
+      app.hideLoading();
       app.showSuccess('登录成功');
       
       // 返回上一页
       setTimeout(() => {
-        wx.navigateBack({ fail: () => {
-          wx.switchTab({ url: '/pages/home/home' });
-        }});
+        wx.navigateBack({ 
+          fail: () => {
+            wx.switchTab({ url: '/pages/home/home' });
+          }
+        });
       }, 800);
-    }, 1200);
+    } catch (error) {
+      console.error('登录失败:', error);
+      app.hideLoading();
+      app.showError(error.message || '登录失败，请重试');
+    } finally {
+      this.setData({ loading: false });
+    }
   },
 
   /**

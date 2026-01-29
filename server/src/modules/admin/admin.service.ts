@@ -15,14 +15,18 @@ export class AdminService {
   async getDashboardOverview() {
     const today = dayjs().startOf('day').toDate();
     const yesterday = dayjs().subtract(1, 'day').startOf('day').toDate();
+    const yesterdayEnd = dayjs().subtract(1, 'day').endOf('day').toDate();
 
-    // 并行查询
+    // 并行查询今日和昨日数据
     const [
       totalUsers,
       todayUsers,
+      yesterdayUsers,
       totalWorks,
       todayWorks,
+      yesterdayWorks,
       pendingWorks,
+      approvedWorks,
       totalTasks,
       processingTasks,
     ] = await Promise.all([
@@ -32,15 +36,27 @@ export class AdminService {
       this.prisma.user.count({
         where: { createdAt: { gte: today } },
       }),
+      // 昨日新增用户
+      this.prisma.user.count({
+        where: { createdAt: { gte: yesterday, lt: today } },
+      }),
       // 总作品数
       this.prisma.works.count(),
       // 今日新增作品
       this.prisma.works.count({
         where: { createdAt: { gte: today } },
       }),
+      // 昨日新增作品
+      this.prisma.works.count({
+        where: { createdAt: { gte: yesterday, lt: today } },
+      }),
       // 待审核作品
       this.prisma.works.count({
         where: { status: 'pending' },
+      }),
+      // 已审核通过作品
+      this.prisma.works.count({
+        where: { status: 'approved' },
       }),
       // 总任务数
       this.prisma.task.count(),
@@ -50,7 +66,38 @@ export class AdminService {
       }),
     ]);
 
+    // 计算增长率
+    const calcChange = (today: number, yesterday: number): { change: string; changeUp: boolean } => {
+      if (yesterday === 0) {
+        return { change: today > 0 ? '+100%' : '0%', changeUp: today > 0 };
+      }
+      const rate = ((today - yesterday) / yesterday * 100).toFixed(1);
+      return {
+        change: `${Number(rate) >= 0 ? '+' : ''}${rate}%`,
+        changeUp: Number(rate) >= 0,
+      };
+    };
+
+    // 计算审核通过率
+    const passRate = totalWorks > 0 ? ((approvedWorks / totalWorks) * 100).toFixed(1) : '0';
+
     return {
+      todayGeneration: {
+        value: todayWorks,
+        ...calcChange(todayWorks, yesterdayWorks),
+      },
+      activeUsers: {
+        value: todayUsers,
+        ...calcChange(todayUsers, yesterdayUsers),
+      },
+      passRate: {
+        value: `${passRate}%`,
+        change: '+0%',
+        changeUp: true,
+      },
+      pendingAudit: {
+        value: pendingWorks,
+      },
       users: {
         total: totalUsers,
         today: todayUsers,
@@ -170,5 +217,107 @@ export class AdminService {
       model: modelData,
       member: memberData,
     };
+  }
+
+  /**
+   * 获取风格分布（用于饼图）
+   */
+  async getStyleDistribution() {
+    const styleDistribution = await this.prisma.works.groupBy({
+      by: ['styleId'],
+      _count: true,
+    });
+
+    const styles = await this.prisma.category.findMany({
+      where: { type: 'style' },
+      select: { id: true, name: true },
+    });
+
+    // 预设颜色
+    const colors = ['#ef4444', '#3b82f6', '#f59e0b', '#22c55e', '#8b5cf6', '#6b7280', '#ec4899', '#14b8a6'];
+
+    return styleDistribution.map((item, index) => {
+      const style = styles.find((s) => s.id === item.styleId);
+      return {
+        name: style?.name || '未知',
+        value: item._count,
+        color: colors[index % colors.length],
+      };
+    });
+  }
+
+  /**
+   * 获取模型统计（用于柱状图）
+   */
+  async getModelStat() {
+    const modelDistribution = await this.prisma.works.groupBy({
+      by: ['modelId'],
+      _count: true,
+    });
+
+    const models = await this.prisma.category.findMany({
+      where: { type: 'model' },
+      select: { id: true, name: true },
+    });
+
+    const xAxis = modelDistribution.map((item) => {
+      const model = models.find((m) => m.id === item.modelId);
+      return model?.name || '未知';
+    });
+
+    const data = modelDistribution.map((item) => item._count);
+
+    return {
+      xAxis,
+      series: [
+        {
+          name: '调用次数',
+          data,
+        },
+      ],
+    };
+  }
+
+  /**
+   * 获取最新作品
+   */
+  async getRecentWorks(limit: number = 5) {
+    const works = await this.prisma.works.findMany({
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { nickname: true } },
+        style: { select: { name: true } },
+      },
+    });
+
+    return works.map((work) => ({
+      id: work.id,
+      prompt: work.prompt.length > 30 ? work.prompt.substring(0, 30) + '...' : work.prompt,
+      style: work.style?.name || '未知',
+      thumbnail: work.thumbnailUrl || work.imageUrl,
+      time: this.formatRelativeTime(work.createdAt),
+      user: work.user?.nickname || '未知用户',
+    }));
+  }
+
+  /**
+   * 格式化相对时间
+   */
+  private formatRelativeTime(date: Date): string {
+    const now = dayjs();
+    const target = dayjs(date);
+    const diffMinutes = now.diff(target, 'minute');
+
+    if (diffMinutes < 1) return '刚刚';
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+
+    const diffHours = now.diff(target, 'hour');
+    if (diffHours < 24) return `${diffHours}小时前`;
+
+    const diffDays = now.diff(target, 'day');
+    if (diffDays < 7) return `${diffDays}天前`;
+
+    return target.format('MM-DD HH:mm');
   }
 }

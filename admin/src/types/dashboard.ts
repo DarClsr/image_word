@@ -1,53 +1,71 @@
 import { z } from 'zod';
 
-export const DashboardMetricSchema = z.object({
-  label: z.string(),
-  value: z.number(),
-  unit: z.string().optional(),
-  delta: z.number().optional(),
-});
+/**
+ * 统计卡片数据
+ */
+export interface StatCardData {
+  value: number | string;
+  change?: string;
+  changeUp?: boolean;
+}
 
-export const DashboardOverviewSchema = z.object({
-  metrics: z.array(DashboardMetricSchema),
-});
+/**
+ * 仪表盘概览数据（后端返回格式）
+ */
+export interface DashboardOverview {
+  todayGeneration: StatCardData;
+  activeUsers: StatCardData;
+  passRate: StatCardData;
+  pendingAudit: { value: number };
+  users: { total: number; today: number };
+  works: { total: number; today: number; pending: number };
+  tasks: { total: number; processing: number };
+}
 
-export type DashboardOverview = z.infer<typeof DashboardOverviewSchema>;
+/**
+ * 趋势数据点
+ */
+export interface TrendDataPoint {
+  date: string;
+  users: number;
+  works: number;
+}
 
-export const DashboardTrendPointSchema = z.object({
-  date: z.string(),
-  value: z.number(),
-});
+/**
+ * 趋势数据（后端返回格式）
+ */
+export type DashboardTrend = TrendDataPoint[];
 
-export const DashboardTrendSchema = z.object({
-  range: z.string(),
-  series: z.array(
-    z.object({
-      name: z.string(),
-      data: z.array(DashboardTrendPointSchema),
-    })
-  ),
-});
+/**
+ * 风格分布数据
+ */
+export interface StyleDistItem {
+  name: string;
+  value: number;
+  color?: string;
+}
 
-export type DashboardTrend = z.infer<typeof DashboardTrendSchema>;
+export type DashboardStyleDist = StyleDistItem[];
 
-export const DashboardStyleDistSchema = z.object({
-  items: z.array(
-    z.object({
-      name: z.string(),
-      value: z.number(),
-    })
-  ),
-});
+/**
+ * 模型统计数据
+ */
+export interface DashboardModelStat {
+  xAxis: string[];
+  series: Array<{
+    name: string;
+    data: number[];
+  }>;
+}
 
-export type DashboardStyleDist = z.infer<typeof DashboardStyleDistSchema>;
-
-export const DashboardModelStatSchema = z.object({
-  items: z.array(
-    z.object({
-      name: z.string(),
-      value: z.number(),
-    })
-  ),
-});
-
-export type DashboardModelStat = z.infer<typeof DashboardModelStatSchema>;
+/**
+ * 最新作品
+ */
+export interface RecentWork {
+  id: number;
+  prompt: string;
+  style: string;
+  thumbnail: string;
+  time: string;
+  user: string;
+}

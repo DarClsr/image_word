@@ -17,7 +17,7 @@
             <div class="stat-card__info">
               <span class="stat-card__title">{{ stat.title }}</span>
               <span class="stat-card__value">{{ stat.value }}</span>
-              <div class="stat-card__change" :class="{ 'is-up': stat.changeUp }">
+              <div v-if="stat.change" class="stat-card__change" :class="{ 'is-up': stat.changeUp }">
                 <n-icon :size="14">
                   <TrendingUpOutline v-if="stat.changeUp" />
                   <TrendingDownOutline v-else />
@@ -41,14 +41,14 @@
       <n-gi>
         <n-card title="生成趋势" class="chart-card">
           <template #header-extra>
-            <n-radio-group v-model:value="trendRange" size="small">
-              <n-radio-button value="7">近7天</n-radio-button>
-              <n-radio-button value="30">近30天</n-radio-button>
+            <n-radio-group v-model:value="trendRange" size="small" @update:value="loadTrend">
+              <n-radio-button value="7d">近7天</n-radio-button>
+              <n-radio-button value="30d">近30天</n-radio-button>
             </n-radio-group>
           </template>
           <LineChart
-            :x-data="trendData.xAxis"
-            :series="trendData.series"
+            :x-data="trendChartData.xAxis"
+            :series="trendChartData.series"
             :height="280"
           />
         </n-card>
@@ -72,10 +72,11 @@
       </n-gi>
       <n-gi>
         <n-card title="最新作品" class="chart-card">
-          <n-list hoverable clickable>
+          <n-empty v-if="recentWorks.length === 0" description="暂无作品" />
+          <n-list v-else hoverable clickable>
             <n-list-item v-for="item in recentWorks" :key="item.id">
               <template #prefix>
-                <n-avatar :src="item.thumbnail" :size="48" style="border-radius: 8px" />
+                <n-avatar :src="item.thumbnail || defaultAvatar" :size="48" style="border-radius: 8px" />
               </template>
               <n-thing :title="item.prompt" :description="item.style">
                 <template #header-extra>
@@ -105,6 +106,8 @@ import {
   NThing,
   NAvatar,
   NText,
+  NEmpty,
+  useMessage,
 } from 'naive-ui';
 import {
   RefreshOutline,
@@ -113,138 +116,174 @@ import {
   ImagesOutline,
   PeopleOutline,
   CheckmarkCircleOutline,
-  WalletOutline,
+  TimeOutline,
 } from '@vicons/ionicons5';
 import { PageHeader } from '@/components/Common';
 import { LineChart, PieChart, BarChart } from '@/components/Charts';
+import {
+  fetchDashboardOverview,
+  fetchDashboardTrend,
+  fetchDashboardStyleDist,
+  fetchDashboardModelStat,
+  fetchRecentWorks,
+} from '@/api/dashboard';
+import type { DashboardOverview, DashboardTrend, RecentWork, StyleDistItem, DashboardModelStat } from '@/types/dashboard';
 
+const message = useMessage();
 const loading = ref(false);
-const trendRange = ref('7');
+const trendRange = ref<'7d' | '30d'>('7d');
+const defaultAvatar = 'https://picsum.photos/100/100?grayscale';
+
+/** 概览数据 */
+const overview = ref<DashboardOverview | null>(null);
+
+/** 趋势数据 */
+const trendData = ref<DashboardTrend>([]);
+
+/** 风格分布 */
+const styleDistData = ref<StyleDistItem[]>([]);
+
+/** 模型统计 */
+const modelStatData = ref<DashboardModelStat>({ xAxis: [], series: [] });
+
+/** 最新作品 */
+const recentWorks = ref<RecentWork[]>([]);
 
 /** 统计卡片数据 */
-const statCards = reactive([
-  {
-    title: '今日生成',
-    value: '1,248',
-    change: '+12.5%',
-    changeUp: true,
-    icon: ImagesOutline,
-    type: 'primary',
-  },
-  {
-    title: '活跃用户',
-    value: '352',
-    change: '+8.3%',
-    changeUp: true,
-    icon: PeopleOutline,
-    type: 'success',
-  },
-  {
-    title: '审核通过率',
-    value: '98.2%',
-    change: '+2.1%',
-    changeUp: true,
-    icon: CheckmarkCircleOutline,
-    type: 'warning',
-  },
-  {
-    title: '本月收入',
-    value: '¥12,680',
-    change: '-3.2%',
-    changeUp: false,
-    icon: WalletOutline,
-    type: 'info',
-  },
-]);
+const statCards = computed(() => {
+  const data = overview.value;
+  return [
+    {
+      title: '今日生成',
+      value: data?.todayGeneration?.value ?? 0,
+      change: data?.todayGeneration?.change,
+      changeUp: data?.todayGeneration?.changeUp ?? true,
+      icon: ImagesOutline,
+      type: 'primary',
+    },
+    {
+      title: '活跃用户',
+      value: data?.activeUsers?.value ?? 0,
+      change: data?.activeUsers?.change,
+      changeUp: data?.activeUsers?.changeUp ?? true,
+      icon: PeopleOutline,
+      type: 'success',
+    },
+    {
+      title: '审核通过率',
+      value: data?.passRate?.value ?? '0%',
+      change: data?.passRate?.change,
+      changeUp: data?.passRate?.changeUp ?? true,
+      icon: CheckmarkCircleOutline,
+      type: 'warning',
+    },
+    {
+      title: '待审核',
+      value: data?.pendingAudit?.value ?? 0,
+      change: undefined,
+      changeUp: false,
+      icon: TimeOutline,
+      type: 'info',
+    },
+  ];
+});
 
-/** 趋势图数据 */
-const trendData = computed(() => {
-  const days = parseInt(trendRange.value);
-  const xAxis = Array.from({ length: days }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (days - 1 - i));
-    return `${d.getMonth() + 1}/${d.getDate()}`;
-  });
-
+/** 趋势图表数据 */
+const trendChartData = computed(() => {
+  if (!trendData.value.length) {
+    return { xAxis: [], series: [] };
+  }
   return {
-    xAxis,
+    xAxis: trendData.value.map((item) => {
+      const d = new Date(item.date);
+      return `${d.getMonth() + 1}/${d.getDate()}`;
+    }),
     series: [
       {
-        name: '生成次数',
-        data: Array.from({ length: days }, () => Math.floor(Math.random() * 500 + 800)),
+        name: '新增作品',
+        data: trendData.value.map((item) => item.works),
         color: '#3b82f6',
       },
       {
-        name: '审核通过',
-        data: Array.from({ length: days }, () => Math.floor(Math.random() * 450 + 750)),
+        name: '新增用户',
+        data: trendData.value.map((item) => item.users),
         color: '#22c55e',
       },
     ],
   };
 });
 
-/** 风格分布数据 */
-const styleDistData = reactive([
-  { name: '国风', value: 320, color: '#ef4444' },
-  { name: '赛博朋克', value: 280, color: '#3b82f6' },
-  { name: '日漫', value: 250, color: '#f59e0b' },
-  { name: '写实', value: 180, color: '#22c55e' },
-  { name: '插画', value: 150, color: '#8b5cf6' },
-  { name: '其他', value: 120, color: '#6b7280' },
-]);
+/** 加载概览数据 */
+const loadOverview = async () => {
+  try {
+    overview.value = await fetchDashboardOverview();
+  } catch (error) {
+    console.error('加载概览数据失败:', error);
+  }
+};
 
-/** 模型统计数据 */
-const modelStatData = reactive({
-  xAxis: ['SDXL', 'Flux', 'DALL·E', 'Midjourney', 'Stable Diffusion'],
-  series: [
-    {
-      name: '调用次数',
-      data: [1200, 980, 750, 620, 480],
-    },
-  ],
-});
+/** 加载趋势数据 */
+const loadTrend = async (range?: '7d' | '30d') => {
+  try {
+    trendData.value = await fetchDashboardTrend(range || trendRange.value);
+  } catch (error) {
+    console.error('加载趋势数据失败:', error);
+  }
+};
 
-/** 最新作品 */
-const recentWorks = reactive([
-  {
-    id: 1,
-    prompt: '春日樱花下的少女，粉色和服...',
-    style: '日漫风格',
-    thumbnail: 'https://picsum.photos/seed/1/100/100',
-    time: '2分钟前',
-  },
-  {
-    id: 2,
-    prompt: '赛博朋克城市夜景，霓虹灯光...',
-    style: '赛博朋克',
-    thumbnail: 'https://picsum.photos/seed/2/100/100',
-    time: '5分钟前',
-  },
-  {
-    id: 3,
-    prompt: '山水画风格的现代都市...',
-    style: '国风',
-    thumbnail: 'https://picsum.photos/seed/3/100/100',
-    time: '12分钟前',
-  },
-  {
-    id: 4,
-    prompt: '写实风格人像照片，自然光线...',
-    style: '写实',
-    thumbnail: 'https://picsum.photos/seed/4/100/100',
-    time: '18分钟前',
-  },
-]);
+/** 加载风格分布 */
+const loadStyleDist = async () => {
+  try {
+    styleDistData.value = await fetchDashboardStyleDist();
+  } catch (error) {
+    console.error('加载风格分布失败:', error);
+  }
+};
 
-const handleRefresh = () => {
+/** 加载模型统计 */
+const loadModelStat = async () => {
+  try {
+    modelStatData.value = await fetchDashboardModelStat();
+  } catch (error) {
+    console.error('加载模型统计失败:', error);
+  }
+};
+
+/** 加载最新作品 */
+const loadRecentWorks = async () => {
+  try {
+    recentWorks.value = await fetchRecentWorks(5);
+  } catch (error) {
+    console.error('加载最新作品失败:', error);
+  }
+};
+
+/** 加载所有数据 */
+const loadAllData = async () => {
+  await Promise.all([
+    loadOverview(),
+    loadTrend(),
+    loadStyleDist(),
+    loadModelStat(),
+    loadRecentWorks(),
+  ]);
+};
+
+/** 刷新数据 */
+const handleRefresh = async () => {
   loading.value = true;
-  setTimeout(() => {
+  try {
+    await loadAllData();
+    message.success('数据已刷新');
+  } catch (error) {
+    message.error('刷新失败，请重试');
+  } finally {
     loading.value = false;
-  }, 1000);
+  }
 };
 
 onMounted(() => {
-  // 加载真实数据
+  loadAllData();
 });
 </script>
 

@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 // 服务
 import { ClientAuthService } from './services/client-auth.service';
 import { AdminAuthService } from './services/admin-auth.service';
+import { WechatService } from './services/wechat.service';
 
 // 控制器
 import { ClientAuthController } from './controllers/client-auth.controller';
@@ -27,7 +28,7 @@ import { AdminAuthController } from './controllers/admin-auth.controller';
     }),
   ],
   controllers: [ClientAuthController, AdminAuthController],
-  providers: [ClientAuthService, AdminAuthService],
-  exports: [ClientAuthService, AdminAuthService, JwtModule],
+  providers: [ClientAuthService, AdminAuthService, WechatService],
+  exports: [ClientAuthService, AdminAuthService, WechatService, JwtModule],
 })
 export class AuthModule {}
