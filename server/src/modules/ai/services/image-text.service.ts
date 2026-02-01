@@ -40,7 +40,7 @@ interface GeneratedContent {
 /**
  * 图文生成结果
  */
-interface ImageTextResult {
+export interface ImageTextResult {
   /** 生成的文案 */
   content: GeneratedContent;
   /** AI 生成的图片 URL */

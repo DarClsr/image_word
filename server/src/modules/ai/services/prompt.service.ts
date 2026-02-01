@@ -19,7 +19,7 @@ interface ExpandPromptInput {
 /**
  * 扩展结果
  */
-interface ExpandPromptResult {
+export interface ExpandPromptResult {
   /** 扩展后的中文提示词 */
   promptZh: string;
   /** 扩展后的英文提示词（用于模型） */

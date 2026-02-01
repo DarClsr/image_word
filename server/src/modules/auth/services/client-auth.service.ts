@@ -6,7 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { RedisService } from '../../../shared/redis/redis.service';
-import { LoggerService } from '../../../shared/logger/logger.service';
+import { AppLoggerService } from '../../../shared/logger/logger.service';
 import { ErrorCodes } from '../../../common/filters/http-exception.filter';
 import { WechatService } from './wechat.service';
 import {
@@ -26,7 +26,7 @@ export class ClientAuthService {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly wechatService: WechatService,
-    private readonly logger: LoggerService,
+    private readonly logger: AppLoggerService,
   ) {
     // 开发环境且微信未配置时启用模拟模式
     const isDev = this.configService.get<string>('NODE_ENV') !== 'production';

@@ -2,6 +2,7 @@
  * 分类服务
  */
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import {
   CreateCategoryInput,
@@ -26,8 +27,23 @@ export class CategoryService {
       throw new ConflictException('分类编码已存在');
     }
 
+    // 构建 Prisma 数据，处理 parentId
+    const data: Prisma.CategoryUncheckedCreateInput = {
+      name: dto.name,
+      code: dto.code,
+      type: dto.type,
+      sort: dto.sort,
+      status: dto.status,
+    };
+
+    if (dto.icon) data.icon = dto.icon;
+    if (dto.cover) data.cover = dto.cover;
+    if (dto.description) data.description = dto.description;
+    if (dto.config) data.config = dto.config as Prisma.InputJsonValue;
+    if (dto.parentId !== undefined) data.parentId = dto.parentId;
+
     return this.prisma.category.create({
-      data: dto,
+      data,
     });
   }
 
@@ -139,9 +155,24 @@ export class CategoryService {
       throw new NotFoundException('分类不存在');
     }
 
+    // 构建 Prisma 数据，处理 parentId（null 需要转换为 undefined）
+    const data: Prisma.CategoryUncheckedUpdateInput = {};
+
+    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.icon !== undefined) data.icon = dto.icon;
+    if (dto.cover !== undefined) data.cover = dto.cover;
+    if (dto.description !== undefined) data.description = dto.description;
+    if (dto.config !== undefined) data.config = dto.config as Prisma.InputJsonValue;
+    if (dto.parentId !== undefined) {
+      // Prisma 需要 null 而不是 undefined 来表示清空关联
+      data.parentId = dto.parentId === null ? null : dto.parentId;
+    }
+    if (dto.sort !== undefined) data.sort = dto.sort;
+    if (dto.status !== undefined) data.status = dto.status;
+
     return this.prisma.category.update({
       where: { id },
-      data: dto,
+      data,
     });
   }
 

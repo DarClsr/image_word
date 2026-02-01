@@ -20,7 +20,7 @@
     <!-- 搜索栏 -->
     <n-card class="search-card" :bordered="false">
       <n-form :model="queryParams" label-placement="left" :show-feedback="false">
-        <n-grid :x-gap="16" :y-gap="16" cols="1 s:2 m:4 l:5">
+        <n-grid :x-gap="16" :y-gap="16" cols="2 s:3 m:4 l:5">
           <n-gi>
             <n-form-item label="关键词">
               <n-input v-model:value="queryParams.keyword" placeholder="提示词/用户" clearable />
@@ -38,7 +38,10 @@
           </n-gi>
           <n-gi>
             <n-form-item label="时间">
-              <n-date-picker v-model:value="queryParams.dateRange" type="daterange" clearable style="width: 100%" />
+              <n-date-picker
+               start-placeholder="开始时间"
+               end-placeholder="结束时间"
+               v-model:value="queryParams.dateRange" type="daterange" clearable style="width: 100%" />
             </n-form-item>
           </n-gi>
           <n-gi class="search-actions">
@@ -96,7 +99,7 @@
       <!-- 卡片视图 -->
       <div v-else class="works-grid">
         <n-checkbox-group v-model:value="selectedKeys">
-          <n-grid :x-gap="16" :y-gap="16" cols="2 s:3 m:4 l:5 xl:6">
+          <n-grid :x-gap="16" :y-gap="16" cols="4 m:5 l:6 xl:7">
             <n-gi v-for="item in dataList" :key="item.id">
               <div class="work-card" @click="handleView(item)">
                 <n-checkbox :value="item.id" class="work-card__checkbox" @click.stop />
@@ -118,7 +121,7 @@
                   </div>
                 </div>
                 <div class="work-card__actions">
-                  <n-button text type="primary" size="small" @click.stop="handleAudit(item, 'approved')">
+                  <n-button text type="info" size="small" @click.stop="handleAudit(item, 'approved')">
                     通过
                   </n-button>
                   <n-button text type="error" size="small" @click.stop="handleAudit(item, 'rejected')">
@@ -249,7 +252,7 @@ import { formatDateTime, formatRelativeTime } from '@/utils/format';
 const message = useMessage();
 
 /** 视图模式 */
-const viewMode = ref<'table' | 'grid'>('grid');
+const viewMode = ref<'table' | 'grid'>('table');
 
 /** 查询参数 */
 const queryParams = reactive({
@@ -339,8 +342,8 @@ const columns: DataTableColumns<Work> = [
     render: (row) =>
       h(NSpace, { size: 'small' }, () => [
         h(NButton, { text: true, type: 'info', onClick: () => handleView(row) }, { icon: () => h(NIcon, null, () => h(EyeOutline)), default: () => '查看' }),
-        h(NButton, { text: true, type: 'primary', onClick: () => handleAudit(row, 'approved') }, () => '通过'),
-        h(NButton, { text: true, type: 'error', onClick: () => handleAudit(row, 'rejected') }, () => '拒绝'),
+        h(NButton, { text: true, type: 'info', onClick: () => handleAudit(row, 'approved') }, { icon: () => h(NIcon, null, () => h(CheckmarkCircleOutline)), default: () => '通过'}),
+        h(NButton, { text: true, type: 'error', onClick: () => handleAudit(row, 'rejected') }, { icon: () => h(NIcon, null, () => h(TrashOutline)), default: () => '拒绝'}),
       ]),
   },
 ];

@@ -15,14 +15,18 @@
   <view class="login-section fade-in" style="animation-delay: 0.1s;">
     <button class="login-btn wechat-phone-btn" open-type="getPhoneNumber" bindgetphonenumber="onGetPhoneNumber">
       <view class="btn-content">
-        <text class="btn-icon">📱</text>
+        <view class="btn-icon-wrapper phone-icon">
+          <text class="btn-icon">📱</text>
+        </view>
         <text class="btn-text">微信手机号快捷登录</text>
       </view>
     </button>
     
     <button class="login-btn wechat-auth-btn" bindtap="onWechatLogin">
       <view class="btn-content">
-        <text class="btn-icon">💬</text>
+        <view class="btn-icon-wrapper auth-icon">
+          <text class="btn-icon">💬</text>
+        </view>
         <text class="btn-text">微信授权登录</text>
       </view>
     </button>
@@ -36,21 +40,6 @@
     <view class="guest-entry" bindtap="onGuestMode">
       <text class="guest-text">游客模式体验</text>
       <text class="guest-arrow">›</text>
-    </view>
-  </view>
-
-  <!-- 协议 -->
-  <view class="agreement-section fade-in" style="animation-delay: 0.2s;">
-    <view class="agreement-content" bindtap="toggleAgreement">
-      <view class="checkbox {{agreed ? 'checked' : ''}}">
-        <text class="check-icon" wx:if="{{agreed}}">✓</text>
-      </view>
-      <text class="agreement-text">
-        我已阅读并同意
-        <text class="agreement-link" catchtap="showUserAgreement">《用户协议》</text>
-        和
-        <text class="agreement-link" catchtap="showPrivacyPolicy">《隐私政策》</text>
-      </text>
     </view>
   </view>
 </view>

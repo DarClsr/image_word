@@ -62,14 +62,14 @@ const getOption = (): EChartsOption => {
       },
     },
     legend: {
-      top: 0,
+      top: 10,
       textStyle: { color: textColor },
     },
     grid: {
-      top: 40,
+      top: 50,
       left: 12,
       right: 20,
-      bottom: 12,
+      bottom: 24,
       containLabel: true,
     },
     xAxis: {

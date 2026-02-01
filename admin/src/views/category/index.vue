@@ -12,7 +12,7 @@
     <!-- 搜索栏 -->
     <n-card class="search-card" :bordered="false">
       <n-form :model="queryParams" label-placement="left" :show-feedback="false">
-        <n-grid :x-gap="16" :y-gap="16" cols="1 s:2 m:4">
+        <n-grid :x-gap="16" :y-gap="16" cols="2 s:3 m:4">
           <n-gi>
             <n-form-item label="分类名称">
               <n-input v-model:value="queryParams.name" placeholder="请输入分类名称" clearable />
@@ -253,13 +253,13 @@ const columns: DataTableColumns<Category> = [
     fixed: 'right',
     render: (row) =>
       h(NSpace, { size: 'small' }, () => [
-            h(
-              NButton,
-          { text: true, type: 'primary', onClick: () => handleEdit(row) },
+        h(
+          NButton,
+          { text: true, type: 'info', onClick: () => handleEdit(row) },
           { icon: () => h(NIcon, null, () => h(CreateOutline)), default: () => '编辑' }
-            ),
-            h(
-              NButton,
+        ),
+        h(
+          NButton,
           { text: true, type: 'error', onClick: () => handleDelete(row) },
           { icon: () => h(NIcon, null, () => h(TrashOutline)), default: () => '删除' }
         ),

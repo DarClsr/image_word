@@ -4,7 +4,7 @@
  */
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LoggerService } from '../../../shared/logger/logger.service';
+import { AppLoggerService } from '../../../shared/logger/logger.service';
 
 /**
  * 微信 code2Session 响应
@@ -52,7 +52,7 @@ export class WechatService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly logger: LoggerService,
+    private readonly logger: AppLoggerService,
   ) {
     this.appId = this.configService.get<string>('WECHAT_APPID') || '';
     this.appSecret = this.configService.get<string>('WECHAT_SECRET') || '';

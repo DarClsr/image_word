@@ -10,7 +10,7 @@
     </PageHeader>
 
     <!-- 统计卡片 -->
-    <n-grid :x-gap="16" :y-gap="16" cols="1 s:2 m:4" class="stat-cards">
+    <n-grid :x-gap="16" :y-gap="16" cols="1 s:2 m:4" responsive="screen" class="stat-cards">
       <n-gi v-for="stat in statCards" :key="stat.title">
         <n-card class="stat-card" :class="`stat-card--${stat.type}`">
           <div class="stat-card__content">
@@ -27,7 +27,7 @@
               </div>
             </div>
             <div class="stat-card__icon">
-              <n-icon :size="32">
+              <n-icon :size="28">
                 <component :is="stat.icon" />
               </n-icon>
             </div>
@@ -37,62 +37,60 @@
     </n-grid>
 
     <!-- 图表区域 -->
-    <n-grid :x-gap="16" :y-gap="16" cols="1 l:2" class="chart-section">
+    <!-- 生成趋势 - 独占一行 -->
+    <n-card title="生成趋势" class="chart-card chart-section">
+      <template #header-extra>
+        <n-radio-group v-model:value="trendRange" size="small" @update:value="loadTrend">
+          <n-radio-button value="7d">近7天</n-radio-button>
+          <n-radio-button value="30d">近30天</n-radio-button>
+        </n-radio-group>
+      </template>
+      <LineChart
+        :x-data="trendChartData.xAxis"
+        :series="trendChartData.series"
+        :height="300"
+      />
+    </n-card>
+
+    <!-- 风格分布 + 模型调用统计 - 同一行 -->
+    <n-grid :x-gap="16" :y-gap="16" cols="2" class="chart-section">
       <n-gi>
-        <n-card title="生成趋势" class="chart-card">
-          <template #header-extra>
-            <n-radio-group v-model:value="trendRange" size="small" @update:value="loadTrend">
-              <n-radio-button value="7d">近7天</n-radio-button>
-              <n-radio-button value="30d">近30天</n-radio-button>
-            </n-radio-group>
-          </template>
-          <LineChart
-            :x-data="trendChartData.xAxis"
-            :series="trendChartData.series"
-            :height="280"
-          />
+        <n-card title="风格分布" class="chart-card chart-card--centered">
+          <PieChart :data="styleDistData" :height="300" />
         </n-card>
       </n-gi>
       <n-gi>
-        <n-card title="风格分布" class="chart-card">
-          <PieChart :data="styleDistData" :height="280" />
+        <n-card title="模型调用统计" class="chart-card chart-card--centered">
+          <BarChart
+            :x-data="modelStatData.xAxis"
+            :series="modelStatData.series"
+            :height="300"
+          />
         </n-card>
       </n-gi>
     </n-grid>
 
-    <n-grid :x-gap="16" :y-gap="16" cols="1 l:2" class="chart-section">
-      <n-gi>
-        <n-card title="模型调用统计" class="chart-card">
-          <BarChart
-            :x-data="modelStatData.xAxis"
-            :series="modelStatData.series"
-            :height="260"
-          />
-        </n-card>
-      </n-gi>
-      <n-gi>
-        <n-card title="最新作品" class="chart-card">
-          <n-empty v-if="recentWorks.length === 0" description="暂无作品" />
-          <n-list v-else hoverable clickable>
-            <n-list-item v-for="item in recentWorks" :key="item.id">
-              <template #prefix>
-                <n-avatar :src="item.thumbnail || defaultAvatar" :size="48" style="border-radius: 8px" />
-              </template>
-              <n-thing :title="item.prompt" :description="item.style">
-                <template #header-extra>
-                  <n-text depth="3" style="font-size: 12px">{{ item.time }}</n-text>
-                </template>
-              </n-thing>
-            </n-list-item>
-          </n-list>
-        </n-card>
-      </n-gi>
-    </n-grid>
+    <!-- 最新作品 - 独占一行 -->
+    <n-card title="最新作品" class="chart-card chart-section">
+      <n-empty v-if="recentWorks.length === 0" description="暂无作品" />
+      <n-list v-else hoverable clickable>
+        <n-list-item v-for="item in recentWorks" :key="item.id">
+          <template #prefix>
+            <n-avatar :src="item.thumbnail || defaultAvatar" :size="48" style="border-radius: 8px" />
+          </template>
+          <n-thing :title="item.prompt" :description="item.style">
+            <template #header-extra>
+              <n-text depth="3" style="font-size: 12px">{{ item.time }}</n-text>
+            </template>
+          </n-thing>
+        </n-list-item>
+      </n-list>
+    </n-card>
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import {
   NGrid,
   NGi,
@@ -198,6 +196,7 @@ const trendChartData = computed(() => {
       const d = new Date(item.date);
       return `${d.getMonth() + 1}/${d.getDate()}`;
     }),
+    
     series: [
       {
         name: '新增作品',
@@ -275,7 +274,7 @@ const handleRefresh = async () => {
   try {
     await loadAllData();
     message.success('数据已刷新');
-  } catch (error) {
+  } catch {
     message.error('刷新失败，请重试');
   } finally {
     loading.value = false;
@@ -293,36 +292,65 @@ onMounted(() => {
 }
 
 .stat-cards {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
+/* 确保卡片高度一致 */
+.stat-cards :deep(.n-grid-item) {
+  display: flex;
+}
+
+.stat-cards :deep(.n-gi) {
+  display: flex;
+}
+
+/* 统计卡片 */
 .stat-card {
-  border-radius: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
   overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+}
+
+.stat-card :deep(.n-card__content) {
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .stat-card__content {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
 }
 
 .stat-card__info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  min-height: 90px;
 }
 
 .stat-card__title {
   font-size: 13px;
-  color: var(--color-muted, #6b7280);
+  color: var(--color-muted);
+  font-weight: 500;
 }
 
 .stat-card__value {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
-  color: var(--color-text, #111827);
+  color: var(--color-text);
   line-height: 1.2;
+  letter-spacing: -0.5px;
 }
 
 .stat-card__change {
@@ -330,6 +358,7 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   font-size: 12px;
+  font-weight: 500;
   color: #ef4444;
 }
 
@@ -338,14 +367,15 @@ onMounted(() => {
 }
 
 .stat-card__period {
-  color: var(--color-muted, #9ca3af);
+  color: var(--color-muted);
   margin-left: 4px;
+  font-weight: 400;
 }
 
 .stat-card__icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -353,30 +383,117 @@ onMounted(() => {
 }
 
 .stat-card--primary .stat-card__icon {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
 }
 
 .stat-card--success .stat-card__icon {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
 }
 
 .stat-card--warning .stat-card__icon {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
 }
 
 .stat-card--info .stat-card__icon {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
 }
 
+/* 图表区域 */
 .chart-section {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .chart-card {
-  border-radius: 12px;
+  border-radius: 14px;
+  transition: box-shadow 0.2s ease;
+}
+
+.chart-card:hover {
+  box-shadow: var(--shadow-soft);
+}
+
+.chart-card :deep(.n-card-header) {
+  padding-bottom: 12px;
+}
+
+.chart-card :deep(.n-card-header__main) {
+  font-weight: 600;
+  font-size: 15px;
 }
 
 .chart-card :deep(.n-card__content) {
-  padding-top: 8px;
+  padding-top: 12px;
+  padding-bottom: 16px;
+}
+
+/* 图表居中 */
+.chart-card--centered {
+  height: 100%;
+}
+
+.chart-card--centered :deep(.n-card__content) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chart-card--centered :deep(.chart-container) {
+  max-width: 100%;
+}
+
+/* 确保同行卡片高度一致 */
+.chart-section :deep(.n-gi) {
+  display: flex;
+}
+
+.chart-section :deep(.n-grid-item) {
+  display: flex;
+}
+
+/* 列表项优化 */
+.chart-card :deep(.n-list-item) {
+  border-radius: 10px;
+  margin-bottom: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.chart-card :deep(.n-list-item:last-child) {
+  margin-bottom: 0;
+}
+
+.chart-card :deep(.n-thing-header__title) {
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.chart-card :deep(.n-thing__description) {
+  color: var(--color-primary);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* 暗黑模式优化 */
+:global(html[data-theme='dark']) .stat-card--primary .stat-card__icon {
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+}
+
+:global(html[data-theme='dark']) .stat-card--success .stat-card__icon {
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.25);
+}
+
+:global(html[data-theme='dark']) .stat-card--warning .stat-card__icon {
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+}
+
+:global(html[data-theme='dark']) .stat-card--info .stat-card__icon {
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);
 }
 </style>

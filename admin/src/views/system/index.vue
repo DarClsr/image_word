@@ -54,7 +54,7 @@
             </n-form-item>
 
             <n-form-item>
-              <n-button type="primary" :loading="configSaving" @click="handleSaveConfig">
+              <n-button type="info" :loading="configSaving" @click="handleSaveConfig">
                 保存配置
               </n-button>
             </n-form-item>
@@ -68,7 +68,7 @@
           <template #header>
             <n-space justify="space-between" align="center">
               <span>AI 模型配置</span>
-              <n-button type="primary" size="small" @click="handleAddModel">
+              <n-button type="info" size="small" @click="handleAddModel">
                 <template #icon><n-icon><AddOutline /></n-icon></template>
                 添加模型
               </n-button>
@@ -93,7 +93,7 @@
               <template #header>
                 <n-space justify="space-between" align="center">
                   <span>图片比例选项</span>
-                  <n-button type="primary" size="small" @click="handleAddRatio">
+                  <n-button type="info" size="small" @click="handleAddRatio">
                     <template #icon><n-icon><AddOutline /></n-icon></template>
                     添加
                   </n-button>
@@ -115,7 +115,7 @@
               <template #header>
                 <n-space justify="space-between" align="center">
                   <span>生成数量选项</span>
-                  <n-button type="primary" size="small" @click="handleAddCount">
+                  <n-button type="info" size="small" @click="handleAddCount">
                     <template #icon><n-icon><AddOutline /></n-icon></template>
                     添加
                   </n-button>
@@ -173,7 +173,7 @@
               </n-gi>
             </n-grid>
             <n-form-item>
-              <n-button type="primary" :loading="generateSaving" @click="handleSaveGenerate">
+              <n-button type="info" :loading="generateSaving" @click="handleSaveGenerate">
                 保存配置
               </n-button>
             </n-form-item>
@@ -205,7 +205,7 @@
               clearable
               style="width: 240px"
             />
-            <n-button type="primary" @click="handleSearchLog">搜索</n-button>
+            <n-button type="info" @click="handleSearchLog">搜索</n-button>
           </n-space>
 
           <n-data-table
@@ -270,7 +270,7 @@
       <template #footer>
         <n-space justify="end">
           <n-button @click="modelModal.visible = false">取消</n-button>
-          <n-button type="primary" :loading="modelModal.loading" @click="handleSaveModel">确定</n-button>
+          <n-button type="info" :loading="modelModal.loading" @click="handleSaveModel">确定</n-button>
         </n-space>
       </template>
     </n-modal>
@@ -312,7 +312,7 @@
       <template #footer>
         <n-space justify="end">
           <n-button @click="ratioModal.visible = false">取消</n-button>
-          <n-button type="primary" :loading="ratioModal.loading" @click="handleSaveRatio">确定</n-button>
+          <n-button type="info" :loading="ratioModal.loading" @click="handleSaveRatio">确定</n-button>
         </n-space>
       </template>
     </n-modal>
@@ -356,7 +356,7 @@
       <template #footer>
         <n-space justify="end">
           <n-button @click="countModal.visible = false">取消</n-button>
-          <n-button type="primary" :loading="countModal.loading" @click="handleSaveCount">确定</n-button>
+          <n-button type="info" :loading="countModal.loading" @click="handleSaveCount">确定</n-button>
         </n-space>
       </template>
     </n-modal>
@@ -491,7 +491,7 @@ const modelColumns: DataTableColumns<ModelConfig> = [
     fixed: 'right',
     render: (row) =>
       h(NSpace, { size: 'small' }, () => [
-        h(NButton, { text: true, type: 'primary', onClick: () => handleEditModel(row) }, { icon: () => h(NIcon, null, () => h(CreateOutline)), default: () => '编辑' }),
+        h(NButton, { text: true, type: 'info', onClick: () => handleEditModel(row) }, { icon: () => h(NIcon, null, () => h(CreateOutline)), default: () => '编辑' }),
         h(NButton, { text: true, type: 'error', onClick: () => handleDeleteModel(row) }, { icon: () => h(NIcon, null, () => h(TrashOutline)), default: () => '删除' }),
       ]),
   },
@@ -627,7 +627,7 @@ const ratioColumns: DataTableColumns<RatioConfig> = [
     width: 100,
     render: (row) =>
       h(NSpace, { size: 'small' }, () => [
-        h(NButton, { text: true, type: 'primary', size: 'small', onClick: () => handleEditRatio(row) }, { default: () => '编辑' }),
+        h(NButton, { text: true, type: 'info', size: 'small', onClick: () => handleEditRatio(row) }, { default: () => '编辑' }),
         h(NButton, { text: true, type: 'error', size: 'small', onClick: () => handleDeleteRatio(row) }, { default: () => '删除' }),
       ]),
   },
@@ -750,7 +750,7 @@ const countColumns: DataTableColumns<CountConfig> = [
     width: 100,
     render: (row) =>
       h(NSpace, { size: 'small' }, () => [
-        h(NButton, { text: true, type: 'primary', size: 'small', onClick: () => handleEditCount(row) }, { default: () => '编辑' }),
+        h(NButton, { text: true, type: 'info', size: 'small', onClick: () => handleEditCount(row) }, { default: () => '编辑' }),
         h(NButton, { text: true, type: 'error', size: 'small', onClick: () => handleDeleteCount(row) }, { default: () => '删除' }),
       ]),
   },

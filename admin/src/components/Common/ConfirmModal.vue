@@ -1,6 +1,6 @@
 <template>
   <n-modal
-    v-model:show="visible"
+     model-value="visible"
     preset="dialog"
     :type="type"
     :title="title"

@@ -12,7 +12,7 @@
     <!-- 搜索栏 -->
     <n-card class="search-card" :bordered="false">
       <n-form :model="queryParams" label-placement="left" :show-feedback="false">
-        <n-grid :x-gap="16" :y-gap="16" cols="1 s:2 m:4 l:5">
+        <n-grid :x-gap="16" :y-gap="16" cols="2 s:3 m:4 l:5">
           <n-gi>
             <n-form-item label="关键词">
               <n-input v-model:value="queryParams.keyword" placeholder="昵称/手机号" clearable />
@@ -227,6 +227,7 @@ import { SearchOutline, RefreshOutline, DownloadOutline, EyeOutline } from '@vic
 import { PageHeader, ConfirmModal } from '@/components/Common';
 import type { User } from '@/types/user';
 import { formatDateTime, formatDate, maskPhone } from '@/utils/format';
+import { fetchUsers } from '@/api/user';
 
 const message = useMessage();
 
@@ -256,11 +257,7 @@ const loading = ref(false);
 
 /** 数据列表 */
 const dataList = ref<User[]>([
-  { id: 1, openid: 'oXXXX1', nickname: '张三', avatar: 'https://i.pravatar.cc/100?u=1', phone: '13812341234', gender: 1, memberType: 'pro', memberExpireAt: '2026-12-31T23:59:59Z', totalQuota: 100, usedQuota: 45, worksCount: 56, totalGenerate: 120, status: 1, lastLoginAt: '2026-01-26T08:00:00Z', createdAt: '2025-06-15T10:00:00Z', updatedAt: '2026-01-26T08:00:00Z' },
-  { id: 2, openid: 'oXXXX2', nickname: '李四', avatar: 'https://i.pravatar.cc/100?u=2', phone: '13912345678', gender: 2, memberType: 'basic', memberExpireAt: '2026-06-30T23:59:59Z', totalQuota: 50, usedQuota: 32, worksCount: 23, totalGenerate: 45, status: 1, lastLoginAt: '2026-01-25T15:30:00Z', createdAt: '2025-08-20T14:00:00Z', updatedAt: '2026-01-25T15:30:00Z' },
-  { id: 3, openid: 'oXXXX3', nickname: '王五', avatar: 'https://i.pravatar.cc/100?u=3', gender: 0, memberType: 'free', totalQuota: 5, usedQuota: 5, worksCount: 5, totalGenerate: 8, status: 1, lastLoginAt: '2026-01-24T09:00:00Z', createdAt: '2026-01-10T08:00:00Z', updatedAt: '2026-01-24T09:00:00Z' },
-  { id: 4, openid: 'oXXXX4', nickname: '赵六', avatar: 'https://i.pravatar.cc/100?u=4', phone: '15012345678', gender: 1, memberType: 'free', totalQuota: 5, usedQuota: 3, worksCount: 3, totalGenerate: 3, status: 0, lastLoginAt: '2026-01-20T12:00:00Z', createdAt: '2026-01-05T10:00:00Z', updatedAt: '2026-01-20T12:00:00Z' },
-  { id: 5, openid: 'oXXXX5', nickname: '钱七', avatar: 'https://i.pravatar.cc/100?u=5', phone: '18612345678', gender: 2, memberType: 'pro', memberExpireAt: '2027-01-31T23:59:59Z', totalQuota: 200, usedQuota: 89, worksCount: 78, totalGenerate: 156, status: 1, lastLoginAt: '2026-01-26T07:00:00Z', createdAt: '2025-03-10T09:00:00Z', updatedAt: '2026-01-26T07:00:00Z' },
+ 
 ]);
 
 /** 分页 */
@@ -321,7 +318,7 @@ const columns: DataTableColumns<User> = [
     fixed: 'right',
     render: (row) =>
       h(NSpace, { size: 'small' }, () => [
-        h(NButton, { text: true, type: 'primary', onClick: () => handleView(row) }, { icon: () => h(NIcon, null, () => h(EyeOutline)), default: () => '详情' }),
+        h(NButton, { text: true, type: 'info', onClick: () => handleView(row) }, { icon: () => h(NIcon, null, () => h(EyeOutline)), default: () => '详情' }),
       ]),
   },
 ];
@@ -513,6 +510,20 @@ const handleBanConfirm = () => {
 const handleExport = () => {
   message.info('导出功能开发中');
 };
+
+/** 加载用户列表 */
+
+const loadData = async () => {
+  const data = await fetchUsers(queryParams);
+  console.log(data);
+  dataList.value = data.list;
+  paginationReactive.itemCount = data.total;
+};
+
+onMounted(() => {
+  loadData();
+});
+
 </script>
 
 <style scoped>

@@ -39,16 +39,20 @@ Page({
   checkLoginStatus() {
     const isLoggedIn = app.globalData.isLoggedIn;
     const userInfo = app.globalData.userInfo || {};
-    
+
+    console.log('userInfo', userInfo);
+    console.log('isLoggedIn', isLoggedIn);
     this.setData({
       isLoggedIn,
       userInfo: {
         id: userInfo.id || '',
-        nickName: userInfo.nickName || '用户',
-        avatarUrl: userInfo.avatarUrl || '',
+        nickName: userInfo.nickname || '用户',
+        avatar: userInfo.avatar || '',
         memberType: userInfo.memberType || 'free'
       }
     });
+
+    console.log('this.data.userInfo', this.data.userInfo);
   },
 
   /**

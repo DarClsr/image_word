@@ -47,7 +47,6 @@ Page({
    * 微信授权登录
    */
   onWechatLogin() {
-    if (!this.checkAgreement()) return;
     
     wx.getUserProfile({
       desc: '用于完善用户资料',

@@ -63,7 +63,7 @@ interface CountConfig {
 /**
  * 完整的生成配置
  */
-interface GenerationConfig {
+export interface GenerationConfig {
   styles: StyleConfig[];
   models: ModelConfig[];
   ratios: RatioConfig[];

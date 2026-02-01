@@ -37,15 +37,15 @@ export class AdminAuthService {
     const failKey = `admin_login_fail:${username}`;
 
     const failCount = await this.redis.get(failKey);
-    if (failCount && parseInt(failCount, 10) >= maxFail) {
-      throw new HttpException(
-        {
-          code: ErrorCodes.LOGIN_FAILED,
-          message: `登录失败次数过多，请 ${Math.ceil(lockTime / 60)} 分钟后重试`,
-        },
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
+    // if (failCount && parseInt(failCount, 10) >= maxFail) {
+    //   throw new HttpException(
+    //     {
+    //       code: ErrorCodes.LOGIN_FAILED,
+    //       message: `登录失败次数过多，请 ${Math.ceil(lockTime / 60)} 分钟后重试`,
+    //     },
+    //     HttpStatus.TOO_MANY_REQUESTS,
+    //   );
+    // }
 
     // 2. 查找管理员
     const admin = await this.prisma.adminUser.findUnique({
@@ -59,6 +59,7 @@ export class AdminAuthService {
         message: '用户名或密码错误',
       });
     }
+    console.log(admin);
 
     // 3. 验证密码
     const isValid = await verifyPassword(password, admin.password, admin.salt);

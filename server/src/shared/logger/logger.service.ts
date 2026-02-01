@@ -5,6 +5,9 @@ import { Injectable, LoggerService } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as winston from 'winston';
 
+// 导出 LoggerService 接口供其他模块使用
+export { LoggerService };
+
 @Injectable()
 export class AppLoggerService implements LoggerService {
   private logger: winston.Logger;

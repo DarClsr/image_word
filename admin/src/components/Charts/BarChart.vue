@@ -154,5 +154,6 @@ watch([() => props.xData, () => props.series, isDark], updateChart, { deep: true
 <style scoped>
 .chart-container {
   width: 100%;
+  margin: 0 auto;
 }
 </style>

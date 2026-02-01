@@ -46,7 +46,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let code = ErrorCodes.UNKNOWN_ERROR;
+    let code: number = ErrorCodes.UNKNOWN_ERROR;
     let message = '服务器内部错误';
     let errors: unknown = undefined;
 

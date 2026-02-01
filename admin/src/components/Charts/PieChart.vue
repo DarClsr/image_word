@@ -62,19 +62,19 @@ const getOption = (): EChartsOption => {
     },
     legend: {
       show: props.showLegend,
-      orient: 'vertical',
-      right: 20,
-      top: 'center',
+      orient: 'horizontal',
+      bottom: 10,
+      left: 'center',
       textStyle: { color: textColor },
       itemWidth: 12,
       itemHeight: 12,
-      itemGap: 12,
+      itemGap: 16,
     },
     series: [
       {
         type: 'pie',
-        radius: props.donut ? ['45%', '70%'] : '70%',
-        center: props.showLegend ? ['35%', '50%'] : ['50%', '50%'],
+        radius: props.donut ? ['40%', '65%'] : '65%',
+        center: ['50%', '45%'],
         avoidLabelOverlap: true,
         itemStyle: {
           borderRadius: props.donut ? 6 : 0,
@@ -141,5 +141,6 @@ watch([() => props.data, isDark], updateChart, { deep: true });
 <style scoped>
 .chart-container {
   width: 100%;
+  margin: 0 auto;
 }
 </style>

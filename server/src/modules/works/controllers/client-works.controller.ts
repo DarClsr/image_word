@@ -7,7 +7,8 @@ import { ClientAuthGuard } from '../../../common/guards';
 import { CurrentUser, Public } from '../../../common/decorators';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { CreateWorksSchema, CreateWorksInput, QueryWorksSchema, QueryWorksInput } from '../schemas/works.schema';
-import { User } from '@prisma/client';
+
+type User = { id: number };
 
 @Controller('client/works')
 @UseGuards(ClientAuthGuard)

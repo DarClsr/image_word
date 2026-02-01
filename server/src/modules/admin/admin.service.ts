@@ -122,19 +122,19 @@ export class AdminService {
 
     // 获取每日用户注册数
     const userTrend = await this.prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
-      SELECT DATE(created_at) as date, COUNT(*) as count
+      SELECT DATE("createdAt") as date, COUNT(*) as count
       FROM users
-      WHERE created_at >= ${startDate}
-      GROUP BY DATE(created_at)
+      WHERE "createdAt" >= ${startDate}
+      GROUP BY DATE("createdAt")
       ORDER BY date
     `;
 
     // 获取每日作品数
     const worksTrend = await this.prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
-      SELECT DATE(created_at) as date, COUNT(*) as count
+      SELECT DATE("createdAt") as date, COUNT(*) as count
       FROM works
-      WHERE created_at >= ${startDate}
-      GROUP BY DATE(created_at)
+      WHERE "createdAt" >= ${startDate}
+      GROUP BY DATE("createdAt")
       ORDER BY date
     `;
 

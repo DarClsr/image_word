@@ -40,7 +40,8 @@ class Request {
     if (statusCode >= 200 && statusCode < 300) {
       // 业务状态码判断
       if (data.code === 0 || data.code === 200) {
-        return data.data !== undefined ? data.data : data;
+        console.log('data', data.data !== undefined ? data.data : data);
+        return Promise.resolve(data.data !== undefined ? data.data : data);
       } else {
         return Promise.reject({
           code: data.code,
@@ -150,6 +151,7 @@ class Request {
         },
         timeout: this.timeout,
         success: (response) => {
+          console.log('response', response);
           this.handleResponse(response)
             .then(resolve)
             .catch(reject);
