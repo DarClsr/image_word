@@ -41,6 +41,7 @@ model User {
   // 关联
   works           Works[]
   tasks           Task[]
+  adViews         AdView[]
   
   @@index([openid])
   @@index([phone])
@@ -284,4 +285,63 @@ model Template {
   @@index([status])
   @@index([sort])
   @@map("templates")
+}
+
+// ==================== 广告激励相关 ====================
+
+/// 广告观看记录
+model AdView {
+  id              Int       @id @default(autoincrement())
+  
+  // 用户
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id])
+  
+  // 广告信息
+  adType          String    @default("video") @db.VarChar(20)  // video/rewarded/interstitial
+  adUnitId        String?   @db.VarChar(100)  // 广告单元ID
+  provider        String    @default("wechat") @db.VarChar(20)  // wechat/tencent/baidu
+  
+  // 观看状态
+  status          String    @default("started") @db.VarChar(20)  // started/completed/failed
+  
+  // 奖励信息
+  rewardQuota     Int       @default(1)  // 奖励额度数量
+  rewarded        Boolean   @default(false)  // 是否已发放奖励
+  rewardedAt      DateTime? // 奖励发放时间
+  
+  // 设备信息（用于防作弊）
+  ip              String?   @db.VarChar(50)
+  deviceId        String?   @db.VarChar(100)
+  
+  // 时间
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("ad_views")
+}
+
+/// 用户每日广告统计
+model AdDailyStats {
+  id              Int       @id @default(autoincrement())
+  
+  userId          Int
+  date            String    @db.VarChar(10)  // YYYY-MM-DD
+  
+  // 统计
+  viewCount       Int       @default(0)  // 观看次数
+  rewardCount     Int       @default(0)  // 获得奖励次数
+  totalRewardQuota Int      @default(0)  // 总奖励额度
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("ad_daily_stats")
 }

@@ -196,7 +196,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, h } from 'vue';
+import { ref, reactive, h, onMounted, computed } from 'vue';
 import {
   NCard,
   NForm,
@@ -227,7 +227,7 @@ import { SearchOutline, RefreshOutline, DownloadOutline, EyeOutline } from '@vic
 import { PageHeader, ConfirmModal } from '@/components/Common';
 import type { User } from '@/types/user';
 import { formatDateTime, formatDate, maskPhone } from '@/utils/format';
-import { fetchUsers } from '@/api/user';
+import { fetchUsers, updateUserQuota, banUser, unbanUser, updateUserMember } from '@/api/user';
 
 const message = useMessage();
 
@@ -256,19 +256,23 @@ const statusOptions = [
 const loading = ref(false);
 
 /** 数据列表 */
-const dataList = ref<User[]>([
- 
-]);
+const dataList = ref<User[]>([]);
 
 /** 分页 */
-const paginationReactive = reactive({
+const pagination = reactive({
   page: 1,
   pageSize: 10,
+  total: 0,
+});
+
+const paginationReactive = computed(() => ({
+  page: pagination.page,
+  pageSize: pagination.pageSize,
   showSizePicker: true,
   pageSizes: [10, 20, 50],
-  itemCount: 5,
+  itemCount: pagination.total,
   prefix: ({ itemCount }: { itemCount: number | undefined }) => `共 ${itemCount ?? 0} 条`,
-});
+}));
 
 /** 表格列 */
 const columns: DataTableColumns<User> = [
@@ -385,9 +389,44 @@ const getGenderText = (gender: number) => {
   return map[gender] || '未知';
 };
 
+/** 加载用户列表 */
+const loadData = async () => {
+  loading.value = true;
+  try {
+    const params: Record<string, unknown> = {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    };
+
+    if (queryParams.keyword) {
+      params.keyword = queryParams.keyword;
+    }
+    if (queryParams.memberType) {
+      params.memberType = queryParams.memberType;
+    }
+    if (queryParams.status !== null) {
+      params.status = queryParams.status;
+    }
+    if (queryParams.dateRange) {
+      params.startDate = new Date(queryParams.dateRange[0]).toISOString();
+      params.endDate = new Date(queryParams.dateRange[1]).toISOString();
+    }
+
+    const data = await fetchUsers(params);
+    dataList.value = data.list || [];
+    pagination.total = data.total || 0;
+  } catch (error) {
+    message.error('加载用户列表失败');
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
 /** 搜索 */
 const handleSearch = () => {
-  paginationReactive.page = 1;
+  pagination.page = 1;
+  loadData();
 };
 
 /** 重置 */
@@ -401,12 +440,14 @@ const handleReset = () => {
 
 /** 分页变化 */
 const onPageChange = (page: number) => {
-  paginationReactive.page = page;
+  pagination.page = page;
+  loadData();
 };
 
 const onPageSizeChange = (pageSize: number) => {
-  paginationReactive.pageSize = pageSize;
-  paginationReactive.page = 1;
+  pagination.pageSize = pageSize;
+  pagination.page = 1;
+  loadData();
 };
 
 /** 查看详情 */
@@ -425,8 +466,8 @@ const handleAdjustQuota = (user: User) => {
 };
 
 /** 确认调整额度 */
-const handleQuotaConfirm = () => {
-  if (!quotaModal.amount) {
+const handleQuotaConfirm = async () => {
+  if (quotaModal.amount === 0) {
     message.warning('请输入调整数量');
     return;
   }
@@ -434,8 +475,16 @@ const handleQuotaConfirm = () => {
     message.warning('请输入调整原因');
     return;
   }
+  if (!quotaModal.userId) return;
+
   quotaModal.loading = true;
-  setTimeout(() => {
+  try {
+    await updateUserQuota(quotaModal.userId, {
+      amount: quotaModal.amount,
+      reason: quotaModal.reason,
+    });
+
+    // 更新本地数据
     const user = dataList.value.find((u) => u.id === quotaModal.userId);
     if (user) {
       user.totalQuota += quotaModal.amount;
@@ -443,10 +492,15 @@ const handleQuotaConfirm = () => {
         detailDrawer.data.totalQuota = user.totalQuota;
       }
     }
+
     quotaModal.visible = false;
-    quotaModal.loading = false;
     message.success('额度调整成功');
-  }, 500);
+  } catch (error) {
+    message.error('额度调整失败');
+    console.error(error);
+  } finally {
+    quotaModal.loading = false;
+  }
 };
 
 /** 调整会员 */
@@ -458,9 +512,17 @@ const handleAdjustMember = (user: User) => {
 };
 
 /** 确认调整会员 */
-const handleMemberConfirm = () => {
+const handleMemberConfirm = async () => {
+  if (!memberModal.userId) return;
+
   memberModal.loading = true;
-  setTimeout(() => {
+  try {
+    await updateUserMember(memberModal.userId, {
+      memberType: memberModal.memberType,
+      expireAt: memberModal.expireAt ? new Date(memberModal.expireAt).toISOString() : undefined,
+    });
+
+    // 更新本地数据
     const user = dataList.value.find((u) => u.id === memberModal.userId);
     if (user) {
       user.memberType = memberModal.memberType;
@@ -470,10 +532,15 @@ const handleMemberConfirm = () => {
         detailDrawer.data.memberExpireAt = user.memberExpireAt;
       }
     }
+
     memberModal.visible = false;
-    memberModal.loading = false;
     message.success('会员调整成功');
-  }, 500);
+  } catch (error) {
+    message.error('会员调整失败');
+    console.error(error);
+  } finally {
+    memberModal.loading = false;
+  }
 };
 
 /** 封禁/解封 */
@@ -490,9 +557,18 @@ const handleToggleStatus = (user: User) => {
 };
 
 /** 确认封禁/解封 */
-const handleBanConfirm = () => {
+const handleBanConfirm = async () => {
+  if (!banConfirm.userId) return;
+
   banConfirm.loading = true;
-  setTimeout(() => {
+  try {
+    if (banConfirm.action === 'ban') {
+      await banUser(banConfirm.userId, '管理员手动封禁');
+    } else {
+      await unbanUser(banConfirm.userId);
+    }
+
+    // 更新本地数据
     const user = dataList.value.find((u) => u.id === banConfirm.userId);
     if (user) {
       user.status = banConfirm.action === 'ban' ? 0 : 1;
@@ -500,10 +576,15 @@ const handleBanConfirm = () => {
         detailDrawer.data.status = user.status;
       }
     }
+
     banConfirm.visible = false;
-    banConfirm.loading = false;
     message.success(banConfirm.action === 'ban' ? '用户已封禁' : '已解除封禁');
-  }, 500);
+  } catch (error) {
+    message.error(banConfirm.action === 'ban' ? '封禁失败' : '解封失败');
+    console.error(error);
+  } finally {
+    banConfirm.loading = false;
+  }
 };
 
 /** 导出 */
@@ -511,19 +592,10 @@ const handleExport = () => {
   message.info('导出功能开发中');
 };
 
-/** 加载用户列表 */
-
-const loadData = async () => {
-  const data = await fetchUsers(queryParams);
-  console.log(data);
-  dataList.value = data.list;
-  paginationReactive.itemCount = data.total;
-};
-
+/** 初始化 */
 onMounted(() => {
   loadData();
 });
-
 </script>
 
 <style scoped>

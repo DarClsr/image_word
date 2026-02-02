@@ -68,7 +68,7 @@ export type UserStatusUpdate = z.infer<typeof UserStatusUpdateSchema>;
  */
 export const UserQuotaUpdateSchema = z.object({
   id: z.number(),
-  quota: z.number().int(),
+  amount: z.number().int(),
   reason: z.string().min(1).max(200),
 });
 export type UserQuotaUpdate = z.infer<typeof UserQuotaUpdateSchema>;

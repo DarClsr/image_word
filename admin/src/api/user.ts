@@ -1,8 +1,7 @@
 import type {
   User,
-  UserMemberUpdate,
   UserQuotaUpdate,
-  UserStatusUpdate,
+  UserMemberUpdate,
 } from '@/types/user';
 import { get, put } from './request';
 
@@ -12,11 +11,17 @@ export const fetchUsers = (params?: Record<string, unknown>) => get<{ list: User
 
 export const fetchUserDetail = (id: number) => get<User>(`${BASE_URL}/${id}`);
 
-export const updateUserStatus = (payload: UserStatusUpdate) => put(`${BASE_URL}/${payload.id}/status`, payload);
+export const updateUserQuota = (id: number, payload: Omit<UserQuotaUpdate, 'id'>) =>
+  put(`${BASE_URL}/${id}/quota`, payload);
 
-export const updateUserQuota = (payload: UserQuotaUpdate) => put(`${BASE_URL}/${payload.id}/quota`, payload);
+export const banUser = (id: number, reason?: string) =>
+  put(`${BASE_URL}/${id}/ban`, { reason });
 
-export const updateUserMember = (payload: UserMemberUpdate) => put(`${BASE_URL}/${payload.id}/member`, payload);
+export const unbanUser = (id: number) =>
+  put(`${BASE_URL}/${id}/unban`, {});
+
+export const updateUserMember = (id: number, payload: Omit<UserMemberUpdate, 'id'>) =>
+  put(`${BASE_URL}/${id}/member`, payload);
 
 export const fetchUserWorks = (id: number, params?: Record<string, unknown>) =>
   get(`${BASE_URL}/${id}/works`, { params });

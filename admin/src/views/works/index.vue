@@ -116,7 +116,7 @@
                 <div class="work-card__info">
                   <div class="work-card__prompt">{{ item.prompt }}</div>
                   <div class="work-card__meta">
-                    <span>{{ item.styleName }}</span>
+                    <span>{{ item.style?.name || '-' }}</span>
                     <span>{{ formatRelativeTime(item.createdAt) }}</span>
                   </div>
                 </div>
@@ -141,6 +141,8 @@
             :item-count="pagination.total"
             :page-sizes="[12, 24, 48]"
             show-size-picker
+            @update:page="onPageChange"
+            @update:page-size="onPageSizeChange"
           />
         </div>
       </div>
@@ -159,9 +161,9 @@
         </div>
         <n-descriptions :column="2" label-placement="left" bordered>
           <n-descriptions-item label="作品 ID">{{ detailModal.data.id }}</n-descriptions-item>
-          <n-descriptions-item label="用户">{{ detailModal.data.userName }}</n-descriptions-item>
-          <n-descriptions-item label="风格">{{ detailModal.data.styleName }}</n-descriptions-item>
-          <n-descriptions-item label="模型">{{ detailModal.data.modelName }}</n-descriptions-item>
+          <n-descriptions-item label="用户">{{ detailModal.data.user?.nickname || '-' }}</n-descriptions-item>
+          <n-descriptions-item label="风格">{{ detailModal.data.style?.name || '-' }}</n-descriptions-item>
+          <n-descriptions-item label="模型">{{ detailModal.data.model?.name || '-' }}</n-descriptions-item>
           <n-descriptions-item label="尺寸">{{ detailModal.data.width }} × {{ detailModal.data.height }}</n-descriptions-item>
           <n-descriptions-item label="状态">
             <n-tag :type="getStatusType(detailModal.data.status)" size="small">
@@ -209,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, h } from 'vue';
+import { ref, reactive, h, onMounted, computed } from 'vue';
 import {
   NCard,
   NForm,
@@ -248,6 +250,8 @@ import {
 import { PageHeader } from '@/components/Common';
 import type { Work } from '@/types/works';
 import { formatDateTime, formatRelativeTime } from '@/utils/format';
+import { fetchWorks, auditWork, batchAuditWork, batchRemoveWorks } from '@/api/works';
+import { fetchCategories } from '@/api/category';
 
 const message = useMessage();
 
@@ -263,12 +267,7 @@ const queryParams = reactive({
 });
 
 /** 风格选项 */
-const styleOptions = [
-  { label: '国风', value: 1 },
-  { label: '赛博朋克', value: 2 },
-  { label: '日漫', value: 3 },
-  { label: '写实', value: 4 },
-];
+const styleOptions = ref<{ label: string; value: number }[]>([]);
 
 /** 状态选项 */
 const statusOptions = [
@@ -284,30 +283,23 @@ const loading = ref(false);
 const selectedKeys = ref<number[]>([]);
 
 /** 数据列表 */
-const dataList = ref<Work[]>([
-  { id: 1, userId: 101, userName: '张三', prompt: '春日樱花下的少女，粉色和服，微风吹拂', styleId: 3, styleName: '日漫', modelId: 1, modelName: 'SDXL', imageUrl: 'https://picsum.photos/seed/w1/800/800', thumbnailUrl: 'https://picsum.photos/seed/w1/200/200', width: 1024, height: 1024, status: 'pending', isPublic: false, viewCount: 0, downloadCount: 0, createdAt: '2026-01-26T08:30:00Z', updatedAt: '2026-01-26T08:30:00Z' },
-  { id: 2, userId: 102, userName: '李四', prompt: '赛博朋克城市夜景，霓虹灯光闪烁', styleId: 2, styleName: '赛博朋克', modelId: 1, modelName: 'SDXL', imageUrl: 'https://picsum.photos/seed/w2/800/800', thumbnailUrl: 'https://picsum.photos/seed/w2/200/200', width: 1024, height: 1024, status: 'approved', isPublic: true, viewCount: 156, downloadCount: 23, createdAt: '2026-01-26T07:20:00Z', updatedAt: '2026-01-26T07:20:00Z' },
-  { id: 3, userId: 103, userName: '王五', prompt: '山水画风格的现代都市，云雾缭绕', styleId: 1, styleName: '国风', modelId: 2, modelName: 'Flux', imageUrl: 'https://picsum.photos/seed/w3/800/800', thumbnailUrl: 'https://picsum.photos/seed/w3/200/200', width: 1024, height: 1024, status: 'approved', isPublic: true, viewCount: 89, downloadCount: 12, createdAt: '2026-01-26T06:15:00Z', updatedAt: '2026-01-26T06:15:00Z' },
-  { id: 4, userId: 104, userName: '赵六', prompt: '写实风格人像照片，自然光线柔和', styleId: 4, styleName: '写实', modelId: 1, modelName: 'SDXL', imageUrl: 'https://picsum.photos/seed/w4/800/800', thumbnailUrl: 'https://picsum.photos/seed/w4/200/200', width: 1024, height: 1024, status: 'rejected', isPublic: false, viewCount: 0, downloadCount: 0, createdAt: '2026-01-26T05:00:00Z', updatedAt: '2026-01-26T05:00:00Z' },
-  { id: 5, userId: 105, userName: '钱七', prompt: '梦幻森林精灵，蝴蝶环绕，魔法光芒', styleId: 3, styleName: '日漫', modelId: 2, modelName: 'Flux', imageUrl: 'https://picsum.photos/seed/w5/800/800', thumbnailUrl: 'https://picsum.photos/seed/w5/200/200', width: 1024, height: 1024, status: 'pending', isPublic: false, viewCount: 0, downloadCount: 0, createdAt: '2026-01-26T04:30:00Z', updatedAt: '2026-01-26T04:30:00Z' },
-  { id: 6, userId: 106, userName: '孙八', prompt: '极简主义建筑设计，几何线条', styleId: 1, styleName: '国风', modelId: 1, modelName: 'SDXL', imageUrl: 'https://picsum.photos/seed/w6/800/800', thumbnailUrl: 'https://picsum.photos/seed/w6/200/200', width: 1024, height: 1024, status: 'approved', isPublic: true, viewCount: 234, downloadCount: 45, createdAt: '2026-01-26T03:00:00Z', updatedAt: '2026-01-26T03:00:00Z' },
-]);
+const dataList = ref<Work[]>([]);
 
 /** 分页 */
 const pagination = reactive({
   page: 1,
   pageSize: 12,
-  total: 6,
+  total: 0,
 });
 
-const paginationReactive = reactive({
-  page: 1,
-  pageSize: 10,
+const paginationReactive = computed(() => ({
+  page: pagination.page,
+  pageSize: pagination.pageSize,
   showSizePicker: true,
   pageSizes: [10, 20, 50],
-  itemCount: 6,
+  itemCount: pagination.total,
   prefix: ({ itemCount }: { itemCount: number | undefined }) => `共 ${itemCount ?? 0} 条`,
-});
+}));
 
 /** 表格列 */
 const columns: DataTableColumns<Work> = [
@@ -320,8 +312,18 @@ const columns: DataTableColumns<Work> = [
     render: (row) => h('img', { src: row.thumbnailUrl, style: { width: '48px', height: '48px', borderRadius: '6px', objectFit: 'cover' } }),
   },
   { title: '提示词', key: 'prompt', ellipsis: { tooltip: true } },
-  { title: '用户', key: 'userName', width: 80 },
-  { title: '风格', key: 'styleName', width: 100 },
+  {
+    title: '用户',
+    key: 'user',
+    width: 100,
+    render: (row) => row.user?.nickname || '-',
+  },
+  {
+    title: '风格',
+    key: 'style',
+    width: 100,
+    render: (row) => row.style?.name || '-',
+  },
   {
     title: '状态',
     key: 'status',
@@ -384,9 +386,58 @@ const getStatusText = (status: string) => {
   return map[status] || status;
 };
 
+/** 加载风格选项 */
+const loadStyleOptions = async () => {
+  try {
+    const res = await fetchCategories();
+    const styles = res.filter((item: { type: string }) => item.type === 'style');
+    styleOptions.value = styles.map((item: { id: number; name: string }) => ({
+      label: item.name,
+      value: item.id,
+    }));
+  } catch (error) {
+    console.error('加载风格选项失败:', error);
+  }
+};
+
+/** 加载作品列表 */
+const loadWorks = async () => {
+  loading.value = true;
+  try {
+    const params: Record<string, unknown> = {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    };
+
+    if (queryParams.keyword) {
+      params.keyword = queryParams.keyword;
+    }
+    if (queryParams.styleId) {
+      params.styleId = queryParams.styleId;
+    }
+    if (queryParams.status) {
+      params.status = queryParams.status;
+    }
+    if (queryParams.dateRange) {
+      params.startDate = new Date(queryParams.dateRange[0]).toISOString();
+      params.endDate = new Date(queryParams.dateRange[1]).toISOString();
+    }
+
+    const res = await fetchWorks(params);
+    dataList.value = res.list || [];
+    pagination.total = res.total || 0;
+  } catch (error) {
+    message.error('加载作品列表失败');
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
 /** 搜索 */
 const handleSearch = () => {
   pagination.page = 1;
+  loadWorks();
 };
 
 /** 重置 */
@@ -401,11 +452,13 @@ const handleReset = () => {
 /** 分页变化 */
 const onPageChange = (page: number) => {
   pagination.page = page;
+  loadWorks();
 };
 
 const onPageSizeChange = (pageSize: number) => {
   pagination.pageSize = pageSize;
   pagination.page = 1;
+  loadWorks();
 };
 
 /** 选择变化 */
@@ -439,34 +492,60 @@ const handleBatchAudit = (status: 'approved' | 'rejected') => {
 };
 
 /** 确认审核 */
-const handleAuditConfirm = () => {
+const handleAuditConfirm = async () => {
   if (auditModal.status === 'rejected' && !auditModal.reason) {
     message.warning('请输入拒绝原因');
     return;
   }
   auditModal.loading = true;
-  setTimeout(() => {
-    dataList.value = dataList.value.map((item) => {
-      if (auditModal.ids.includes(item.id)) {
-        return { ...item, status: auditModal.status };
-      }
-      return item;
-    });
+  try {
+    if (auditModal.ids.length === 1 && auditModal.ids[0] !== undefined) {
+      // 单个审核
+      await auditWork({
+        id: auditModal.ids[0],
+        status: auditModal.status,
+        reason: auditModal.reason || undefined,
+      });
+    } else {
+      // 批量审核
+      await batchAuditWork({
+        ids: auditModal.ids,
+        status: auditModal.status,
+        reason: auditModal.reason || undefined,
+      });
+    }
+    message.success('审核完成');
     auditModal.visible = false;
-    auditModal.loading = false;
     detailModal.visible = false;
     selectedKeys.value = [];
-    message.success('审核完成');
-  }, 500);
+    await loadWorks();
+  } catch (error) {
+    message.error('审核失败');
+    console.error(error);
+  } finally {
+    auditModal.loading = false;
+  }
 };
 
 /** 批量删除 */
-const handleBatchDelete = () => {
+const handleBatchDelete = async () => {
   if (selectedKeys.value.length === 0) return;
-  dataList.value = dataList.value.filter((item) => !selectedKeys.value.includes(item.id));
-  selectedKeys.value = [];
-  message.success('删除成功');
+  try {
+    await batchRemoveWorks(selectedKeys.value);
+    message.success('删除成功');
+    selectedKeys.value = [];
+    await loadWorks();
+  } catch (error) {
+    message.error('删除失败');
+    console.error(error);
+  }
 };
+
+/** 初始化 */
+onMounted(() => {
+  loadStyleOptions();
+  loadWorks();
+});
 </script>
 
 <style scoped>

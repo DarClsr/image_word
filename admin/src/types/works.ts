@@ -17,18 +17,32 @@ export const WorkStatusEnum = z.enum(['pending', 'approved', 'rejected']);
 export type WorkStatus = z.infer<typeof WorkStatusEnum>;
 
 /**
+ * 关联用户 Schema
+ */
+export const WorkUserSchema = z.object({
+  id: z.number(),
+  nickname: z.string(),
+  avatar: z.string().optional(),
+});
+
+/**
+ * 关联分类 Schema
+ */
+export const WorkCategorySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+});
+
+/**
  * 作品 Schema
  */
 export const WorkSchema = z.object({
   id: z.number(),
   userId: z.number(),
-  userName: z.string(),
   prompt: z.string().min(1).max(2000),
   negativePrompt: z.string().max(1000).optional(),
   styleId: z.number(),
-  styleName: z.string(),
   modelId: z.number(),
-  modelName: z.string(),
   imageUrl: z.string().url(),
   thumbnailUrl: z.string().url(),
   width: z.number().int().positive(),
@@ -41,9 +55,19 @@ export const WorkSchema = z.object({
   downloadCount: z.number().int().min(0),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  // 关联对象（后端返回）
+  user: WorkUserSchema.optional(),
+  style: WorkCategorySchema.optional(),
+  model: WorkCategorySchema.optional(),
+  // 兼容字段（前端展示用）
+  userName: z.string().optional(),
+  styleName: z.string().optional(),
+  modelName: z.string().optional(),
 });
 
 export type Work = z.infer<typeof WorkSchema>;
+export type WorkUser = z.infer<typeof WorkUserSchema>;
+export type WorkCategory = z.infer<typeof WorkCategorySchema>;
 
 /**
  * 作品审核 Schema
