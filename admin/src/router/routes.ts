@@ -37,6 +37,12 @@ export const basicRoutes: RouteRecordRaw[] = [
         meta: { title: '用户管理', icon: 'people-outline' },
       },
       {
+        path: 'ad',
+        name: 'Ad',
+        component: () => import('@/views/ad/index.vue'),
+        meta: { title: '广告管理', icon: 'videocam-outline' },
+      },
+      {
         path: 'system',
         name: 'System',
         component: () => import('@/views/system/index.vue'),
