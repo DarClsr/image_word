@@ -9,7 +9,7 @@ import type { EChartsOption } from 'echarts';
 import { useTheme } from '@/composables/useTheme';
 
 /**
- * 柱状图组件
+ * 柱状图组件 - 优化配色版
  */
 const props = withDefaults(
   defineProps<{
@@ -47,91 +47,175 @@ const { resolvedTheme } = useTheme();
 
 const isDark = computed(() => resolvedTheme.value === 'dark');
 
-const defaultColors = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+// 优化的配色方案 - 现代渐变色系
+const defaultColors = [
+  '#4F46E5', // 靛蓝
+  '#10B981', // 翠绿
+  '#F59E0B', // 琥珀
+  '#EF4444', // 玫瑰
+  '#8B5CF6', // 紫罗兰
+  '#EC4899', // 粉红
+  '#06B6D4', // 青色
+  '#F97316', // 橙色
+];
+
+// 暗色模式下的配色（更亮一些）
+const darkColors = [
+  '#818CF8', // 亮靛蓝
+  '#34D399', // 亮翠绿
+  '#FBBF24', // 亮琥珀
+  '#F87171', // 亮玫瑰
+  '#A78BFA', // 亮紫罗兰
+  '#F472B6', // 亮粉红
+  '#22D3EE', // 亮青色
+  '#FB923C', // 亮橙色
+];
+
+const getColors = () => (isDark.value ? darkColors : defaultColors);
 
 const getOption = (): EChartsOption => {
-  const textColor = isDark.value ? '#9ca3af' : '#6b7280';
-  const lineColor = isDark.value ? '#374151' : '#e5e7eb';
+  const colors = getColors();
+  const textColor = isDark.value ? '#94a3b8' : '#64748b';
+  const lineColor = isDark.value ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0';
+  const tooltipBg = isDark.value ? '#1e293b' : '#ffffff';
+  const tooltipBorder = isDark.value ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0';
 
   const categoryAxis = {
     type: 'category' as const,
     data: props.xData,
-    axisLine: { lineStyle: { color: lineColor } },
+    axisLine: {
+      show: true,
+      lineStyle: { color: lineColor },
+    },
     axisTick: { show: false },
-    axisLabel: { color: textColor },
+    axisLabel: {
+      color: textColor,
+      fontSize: 12,
+      margin: 12,
+    },
   };
 
   const valueAxis = {
     type: 'value' as const,
+    axisLine: { show: false },
+    axisTick: { show: false },
     axisLabel: {
       color: textColor,
+      fontSize: 12,
       formatter: props.unit ? `{value}${props.unit}` : '{value}',
     },
-    splitLine: { lineStyle: { color: lineColor, type: 'dashed' as const } },
+    splitLine: {
+      lineStyle: {
+        color: lineColor,
+        type: 'dashed' as const,
+      },
+    },
   };
 
   return {
+    color: colors,
     tooltip: {
       trigger: 'axis',
-      backgroundColor: isDark.value ? '#1f2937' : '#fff',
-      borderColor: isDark.value ? '#374151' : '#e5e7eb',
-      textStyle: { color: isDark.value ? '#e5e7eb' : '#374151' },
-      axisPointer: { type: 'shadow' },
+      backgroundColor: tooltipBg,
+      borderColor: tooltipBorder,
+      borderWidth: 1,
+      padding: [12, 16],
+      textStyle: {
+        color: isDark.value ? '#f1f5f9' : '#0f172a',
+        fontSize: 13,
+      },
+      axisPointer: {
+        type: 'shadow',
+        shadowStyle: {
+          color: isDark.value ? 'rgba(129, 140, 248, 0.1)' : 'rgba(79, 70, 229, 0.05)',
+        },
+      },
+      extraCssText: isDark.value
+        ? 'box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3); border-radius: 10px;'
+        : 'box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.1); border-radius: 10px;',
     },
     legend: {
       show: props.series.length > 1,
       top: 0,
-      textStyle: { color: textColor },
+      right: 0,
+      icon: 'circle',
+      itemWidth: 10,
+      itemHeight: 10,
+      itemGap: 20,
+      textStyle: {
+        color: textColor,
+        fontSize: 12,
+      },
     },
     grid: {
-      top: props.series.length > 1 ? 40 : 20,
-      left: 12,
+      top: props.series.length > 1 ? 50 : 30,
+      left: 0,
       right: 20,
-      bottom: 12,
+      bottom: 0,
       containLabel: true,
     },
     xAxis: props.horizontal ? valueAxis : categoryAxis,
     yAxis: props.horizontal ? categoryAxis : valueAxis,
-    series: props.series.map((s, i) => ({
-      name: s.name,
-      type: 'bar',
-      data: s.data,
-      stack: props.stack ? 'total' : undefined,
-      barWidth: props.series.length === 1 ? '40%' : undefined,
-      barMaxWidth: 50,
-      itemStyle: {
-        color: new echarts.graphic.LinearGradient(
-          props.horizontal ? 0 : 0,
-          props.horizontal ? 0 : 1,
-          props.horizontal ? 1 : 0,
-          props.horizontal ? 0 : 0,
-          [
-            { offset: 0, color: `${s.color || defaultColors[i % defaultColors.length]}` },
-            { offset: 1, color: `${s.color || defaultColors[i % defaultColors.length]}99` },
-          ]
-        ),
-        borderRadius: props.horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
-      },
-      label: {
-        show: props.showLabel,
-        position: props.horizontal ? 'right' : 'top',
-        color: textColor,
-      },
-    })),
+    series: props.series.map((s, i) => {
+      const color = s.color || colors[i % colors.length];
+      return {
+        name: s.name,
+        type: 'bar',
+        data: s.data,
+        stack: props.stack ? 'total' : undefined,
+        barWidth: props.series.length === 1 ? '40%' : '60%',
+        barGap: '20%',
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(
+            props.horizontal ? 1 : 0,
+            props.horizontal ? 0 : 0,
+            props.horizontal ? 0 : 0,
+            props.horizontal ? 0 : 1,
+            [
+              {
+                offset: 0,
+                color: color,
+              },
+              {
+                offset: 1,
+                color: color + (isDark.value ? '99' : 'cc'),
+              },
+            ]
+          ),
+          borderRadius: props.horizontal
+            ? [0, 4, 4, 0]
+            : [4, 4, 0, 0],
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 15,
+            shadowColor: color + (isDark.value ? '66' : '40'),
+          },
+        },
+        label: {
+          show: props.showLabel,
+          position: props.horizontal ? 'right' : 'top',
+          color: textColor,
+          fontSize: 11,
+          formatter: (params: any) => {
+            return props.unit ? `${params.value}${props.unit}` : params.value;
+          },
+        },
+      };
+    }),
   };
 };
 
 const initChart = () => {
   if (!chartRef.value) return;
-  chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : undefined);
+
+  chartInstance = echarts.init(chartRef.value);
   chartInstance.setOption(getOption());
 };
 
 const updateChart = () => {
-  if (chartInstance) {
-    chartInstance.dispose();
-  }
-  initChart();
+  if (!chartInstance) return;
+  chartInstance.setOption(getOption(), true);
 };
 
 const handleResize = () => {
@@ -146,14 +230,24 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   chartInstance?.dispose();
+  chartInstance = null;
 });
 
-watch([() => props.xData, () => props.series, isDark], updateChart, { deep: true });
+watch(
+  () => [props.xData, props.series, props.horizontal, props.stack, props.showLabel],
+  () => {
+    updateChart();
+  },
+  { deep: true }
+);
+
+watch(isDark, () => {
+  updateChart();
+});
 </script>
 
 <style scoped>
 .chart-container {
   width: 100%;
-  margin: 0 auto;
 }
 </style>

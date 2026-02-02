@@ -1,14 +1,14 @@
 <template>
-  <n-layout-header bordered class="header">
+  <n-layout-header class="header">
     <div class="header__left">
-      <n-button quaternary circle @click="appStore.toggleSidebar()">
+      <n-button quaternary circle class="header__toggle" @click="appStore.toggleSidebar()">
         <template #icon>
-          <n-icon>
+          <n-icon size="20">
             <MenuOutline />
           </n-icon>
         </template>
       </n-button>
-      <n-breadcrumb>
+      <n-breadcrumb class="header__breadcrumb">
         <n-breadcrumb-item v-for="item in breadcrumb" :key="item.path">
           {{ item.label }}
         </n-breadcrumb-item>
@@ -16,16 +16,22 @@
     </div>
     <div class="header__right">
       <n-popselect v-model:value="theme" :options="themeOptions" trigger="hover">
-        <n-button quaternary circle>
+        <n-button quaternary circle class="header__btn">
           <template #icon>
-            <n-icon>
+            <n-icon size="20">
               <ColorPaletteOutline />
             </n-icon>
           </template>
         </n-button>
       </n-popselect>
       <n-dropdown :options="userMenu" @select="handleMenuSelect">
-        <n-avatar round size="medium">A</n-avatar>
+        <div class="header__user">
+          <n-avatar round size="medium" class="header__avatar">A</n-avatar>
+          <span class="header__username">Admin</span>
+          <n-icon size="16" class="header__arrow">
+            <ChevronDownOutline />
+          </n-icon>
+        </div>
       </n-dropdown>
     </div>
   </n-layout-header>
@@ -44,7 +50,7 @@ import {
   NAvatar,
   NPopselect,
 } from 'naive-ui';
-import { ColorPaletteOutline, MenuOutline, LogOutOutline } from '@vicons/ionicons5';
+import { ColorPaletteOutline, MenuOutline, LogOutOutline, ChevronDownOutline } from '@vicons/ionicons5';
 import { useAppStore, type ThemeMode } from '@/store/modules/app';
 import { useAuthStore } from '@/store/modules/auth';
 import { useTheme } from '@/composables/useTheme';
@@ -95,20 +101,88 @@ const handleMenuSelect = (key: string) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  height: 64px;
-  background: var(--color-bg-card, #fff);
+  padding: 0 var(--spacing-6);
+  height: 72px;
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .header__left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-4);
+}
+
+.header__toggle {
+  color: var(--color-text-secondary);
+}
+
+.header__toggle:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover) !important;
+}
+
+.header__breadcrumb {
+  font-size: 14px;
+}
+
+.header__breadcrumb :deep(.n-breadcrumb-item__link) {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.header__breadcrumb :deep(.n-breadcrumb-item__link:hover) {
+  color: var(--primary-color);
+}
+
+.header__breadcrumb :deep(.n-breadcrumb-item__separator) {
+  color: var(--color-text-disabled);
+  margin: 0 var(--spacing-2);
 }
 
 .header__right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-3);
+}
+
+.header__btn {
+  color: var(--color-text-secondary);
+}
+
+.header__btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover) !important;
+}
+
+.header__user {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.header__user:hover {
+  background: var(--color-bg-hover);
+}
+
+.header__avatar {
+  background: var(--primary-gradient);
+  color: white;
+  font-weight: 600;
+}
+
+.header__username {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.header__arrow {
+  color: var(--color-text-disabled);
 }
 </style>

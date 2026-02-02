@@ -1,10 +1,9 @@
 <template>
   <n-layout has-sider class="layout-root">
     <n-layout-sider
-      bordered
       collapse-mode="width"
-      :collapsed-width="64"
-      :width="240"
+      :collapsed-width="72"
+      :width="260"
       :collapsed="appStore.collapsed"
       :native-scrollbar="false"
       class="layout-sider"
@@ -34,18 +33,25 @@ const appStore = useAppStore();
 <style scoped>
 .layout-root {
   height: 100vh;
+  background: var(--app-bg-gradient);
 }
 
 .layout-sider {
-  width: 220px;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
+  border-right: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.layout-sider :deep(.n-layout-sider-scroll-container) {
+  display: flex;
+  flex-direction: column;
 }
 
 .layout-content {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--app-bg);
+  background: transparent;
 }
 
 .layout-content :deep(.n-layout-scroll-container) {
@@ -57,7 +63,7 @@ const appStore = useAppStore();
 .layout-main {
   flex: 1;
   min-height: 0;
-  padding: 24px;
+  padding: var(--spacing-6);
   display: flex;
   flex-direction: column;
   overflow: hidden;

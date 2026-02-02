@@ -29,7 +29,12 @@ defineProps<{
 
 <style scoped>
 .page-header {
-  margin-bottom: 20px;
+  margin: var(--space-4) 0 var(--space-6);
+  padding: var(--space-5);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .page-header__main {
