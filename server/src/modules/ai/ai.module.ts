@@ -8,6 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 import { PromptService } from './services/prompt.service';
 import { ImageTextService } from './services/image-text.service';
 import { GenerationConfigService } from './services/generation-config.service';
+import { AIModelService } from './services/ai-model.service';
 import { PromptController } from './controllers/prompt.controller';
 import { ImageTextController } from './controllers/image-text.controller';
 import { GenerationConfigController, AdminGenerationConfigController } from './controllers/generation-config.controller';
@@ -20,7 +21,7 @@ import { GenerationConfigController, AdminGenerationConfigController } from './c
     GenerationConfigController,
     AdminGenerationConfigController,
   ],
-  providers: [PromptService, ImageTextService, GenerationConfigService],
-  exports: [PromptService, ImageTextService, GenerationConfigService],
+  providers: [PromptService, ImageTextService, GenerationConfigService, AIModelService],
+  exports: [PromptService, ImageTextService, GenerationConfigService, AIModelService],
 })
 export class AiModule {}

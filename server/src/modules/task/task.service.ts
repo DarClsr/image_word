@@ -3,10 +3,14 @@
  */
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
+import { QueueService } from '../queue/queue.service';
 
 @Injectable()
 export class TaskService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly queueService: QueueService,
+  ) {}
 
   /**
    * 查询任务状态
@@ -70,6 +74,9 @@ export class TaskService {
     if (task.status !== 'pending') {
       throw new ForbiddenException('只能取消等待中的任务');
     }
+
+    // 尝试从队列中移除任务
+    await this.queueService.cancelJob(taskId);
 
     // 更新任务状态
     await this.prisma.task.update({

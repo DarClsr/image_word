@@ -6,12 +6,16 @@ import { Job } from 'bull';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { AppLoggerService } from '../../../shared/logger/logger.service';
 import { ImageGenerationJob } from '../queue.service';
+import { AIModelService } from '../../ai/services/ai-model.service';
+import { StorageService } from '../../storage/storage.service';
 
 @Processor('image-generation')
 export class ImageGenerationProcessor {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: AppLoggerService,
+    private readonly aiModelService: AIModelService,
+    private readonly storageService: StorageService,
   ) {}
 
   /**
@@ -33,31 +37,31 @@ export class ImageGenerationProcessor {
         },
       });
 
+      await job.progress(10);
+
       // 2. 调用 AI 服务生成图片
-      // TODO: 实际调用 AI 服务 API
-      // const result = await this.aiService.generateImage({
-      //   prompt,
-      //   negative_prompt: job.data.negativePrompt,
-      //   style: styleName,
-      //   model: modelName,
-      //   width: params.width,
-      //   height: params.height,
-      //   steps: params.steps,
-      //   guidance: params.guidance,
-      //   seed: params.seed,
-      // });
-
-      // 模拟生成过程
-      await this.simulateGeneration(job);
-
-      // 3. 模拟结果
-      const mockResult = {
-        imageUrl: `https://storage.example.com/images/${taskId}.png`,
-        thumbnailUrl: `https://storage.example.com/thumbnails/${taskId}.png`,
+      const generation = await this.aiModelService.generateImage({
+        prompt,
+        negativePrompt: job.data.negativePrompt,
         width: params.width,
         height: params.height,
-        seed: params.seed || Math.floor(Math.random() * 1000000),
-      };
+        steps: params.steps,
+        guidance: params.guidance,
+        seed: params.seed,
+        model: modelName,
+      });
+
+      await job.progress(60);
+
+      const seed = params.seed ?? Math.floor(Math.random() * 1000000);
+
+      // 3. 上传到对象存储
+      const [image, thumbnail] = await Promise.all([
+        this.storageService.upload(generation.buffer, userId, generation.contentType),
+        this.storageService.uploadThumbnail(generation.buffer, userId, generation.contentType),
+      ]);
+
+      await job.progress(80);
 
       // 4. 创建作品记录
       const works = await this.prisma.works.create({
@@ -67,12 +71,12 @@ export class ImageGenerationProcessor {
           negativePrompt: job.data.negativePrompt,
           styleId: job.data.styleId,
           modelId: job.data.modelId,
-          imageUrl: mockResult.imageUrl,
-          thumbnailUrl: mockResult.thumbnailUrl,
-          width: mockResult.width,
-          height: mockResult.height,
-          params: { ...params, seed: mockResult.seed },
-          status: 'pending', // 等待审核
+          imageUrl: image.url,
+          thumbnailUrl: thumbnail.url,
+          width: params.width,
+          height: params.height,
+          params: { ...params, seed },
+          status: 'pending',
         },
       });
 
@@ -82,7 +86,13 @@ export class ImageGenerationProcessor {
         data: {
           status: 'completed',
           completedAt: new Date(),
-          result: mockResult,
+          result: {
+            imageUrl: image.url,
+            thumbnailUrl: thumbnail.url,
+            width: params.width,
+            height: params.height,
+            seed,
+          },
           worksId: works.id,
         },
       });
@@ -136,16 +146,5 @@ export class ImageGenerationProcessor {
     this.logger.log(`任务完成回调: ${job.data.taskId}`, 'ImageGenerationProcessor');
   }
 
-  /**
-   * 模拟生成过程（开发用）
-   */
-  private async simulateGeneration(job: Job<ImageGenerationJob>): Promise<void> {
-    const totalSteps = 10;
-    for (let i = 0; i < totalSteps; i++) {
-      // 更新进度
-      await job.progress(((i + 1) / totalSteps) * 100);
-      // 模拟延迟
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-  }
+  // 模拟生成过程已移除，改为真实调用
 }

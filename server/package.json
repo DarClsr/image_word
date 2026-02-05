@@ -41,6 +41,7 @@
     "dayjs": "^1.11.13",
     "helmet": "^8.0.0",
     "ioredis": "^5.4.2",
+    "minio": "^8.0.5",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",

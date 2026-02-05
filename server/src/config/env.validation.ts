@@ -33,7 +33,7 @@ export const EnvSchema = z.object({
   WECHAT_SECRET: z.string().optional(),
 
   // 对象存储
-  STORAGE_TYPE: z.enum(['minio', 'cos']).default('minio'),
+  STORAGE_TYPE: z.enum(['local', 'minio', 'cos']).default('local'),
   MINIO_ENDPOINT: z.string().optional(),
   MINIO_PORT: z.string().transform(Number).optional(),
   MINIO_ACCESS_KEY: z.string().optional(),
@@ -43,6 +43,8 @@ export const EnvSchema = z.object({
     .string()
     .transform((v) => v === 'true')
     .default('false'),
+  STORAGE_LOCAL_DIR: z.string().optional(),
+  STORAGE_PUBLIC_URL: z.string().optional(),
 
   // AI 图像生成服务
   AI_SERVICE_URL: z.string().url().optional(),

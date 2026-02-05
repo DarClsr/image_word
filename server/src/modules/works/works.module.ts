@@ -6,9 +6,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { WorksService } from './works.service';
 import { ClientWorksController } from './controllers/client-works.controller';
 import { AdminWorksController } from './controllers/admin-works.controller';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [JwtModule],
+  imports: [JwtModule, QueueModule],
   controllers: [ClientWorksController, AdminWorksController],
   providers: [WorksService],
   exports: [WorksService],

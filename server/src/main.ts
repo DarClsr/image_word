@@ -3,6 +3,8 @@
  */
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import * as express from 'express';
+import { join } from 'path';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -36,6 +38,10 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   });
+
+  // 本地存储静态资源（uploads）
+  const uploadDir = process.env.STORAGE_LOCAL_DIR || join(process.cwd(), 'uploads');
+  app.use('/uploads', express.static(uploadDir));
 
   // 全局前缀
   app.setGlobalPrefix(process.env.API_PREFIX || '/api');

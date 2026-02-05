@@ -3,13 +3,17 @@
  */
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
+import { QueueService } from '../queue/queue.service';
 import { ErrorCodes } from '../../common/filters/http-exception.filter';
 import { CreateWorksInput, QueryWorksInput, AuditWorksInput, BatchAuditWorksInput } from './schemas/works.schema';
 import { generateUUID } from '../../utils/crypto.util';
 
 @Injectable()
 export class WorksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly queueService: QueueService,
+  ) {}
 
   /**
    * 创建作品（实际创建生成任务）
@@ -74,8 +78,41 @@ export class WorksService {
       return task;
     });
 
-    // TODO: 将任务加入 BullMQ 队列
-    // await this.queue.add('image-generation', { taskId: result.taskId, ... });
+    // 将任务加入 BullMQ 队列
+    try {
+      const params = {
+        width: dto.params?.width ?? 1024,
+        height: dto.params?.height ?? 1024,
+        steps: dto.params?.steps,
+        guidance: dto.params?.guidance,
+        seed: dto.params?.seed,
+      };
+
+      await this.queueService.addImageGenerationJob({
+        taskId: result.taskId,
+        userId,
+        prompt: dto.prompt,
+        negativePrompt: dto.negativePrompt,
+        styleId: dto.styleId,
+        styleName: style.name,
+        modelId: dto.modelId,
+        modelName: model.name,
+        params,
+      });
+    } catch (error) {
+      // 入队失败则回滚额度并标记任务失败
+      await this.prisma.$transaction(async (tx) => {
+        await tx.task.update({
+          where: { taskId: result.taskId },
+          data: { status: 'failed', errorMsg: '任务入队失败' },
+        });
+        await tx.user.update({
+          where: { id: userId },
+          data: { usedQuota: { decrement: 1 } },
+        });
+      });
+      throw error;
+    }
 
     return {
       taskId: result.taskId,

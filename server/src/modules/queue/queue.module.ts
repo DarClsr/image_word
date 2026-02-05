@@ -6,9 +6,13 @@ import { BullModule } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
 import { ImageGenerationProcessor } from './processors/image-generation.processor';
 import { QueueService } from './queue.service';
+import { AiModule } from '../ai/ai.module';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   imports: [
+    AiModule,
+    StorageModule,
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
