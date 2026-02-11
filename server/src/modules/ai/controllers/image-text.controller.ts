@@ -16,7 +16,7 @@ const GenerateImageTextSchema = z.object({
   template: z.enum(['quote', 'tips', 'list', 'story', 'knowledge', 'poster', 'card']),
   style: z.enum(['xiaohongshu', 'minimal', 'gradient', 'magazine', 'retro', 'cute']).optional(),
   ratio: z.enum(['1:1', '3:4', '4:3', '9:16']).optional(),
-  model: z.enum(['ideogram', 'flux', 'jimeng']).optional(),
+  model: z.string().max(50).optional(),
 });
 
 type GenerateImageTextInput = z.infer<typeof GenerateImageTextSchema>;

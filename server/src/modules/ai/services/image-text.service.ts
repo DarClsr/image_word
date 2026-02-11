@@ -4,6 +4,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PromptService } from './prompt.service';
+import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 /**
  * 图文生成输入
@@ -20,7 +21,7 @@ interface ImageTextInput {
   /** 图片比例 */
   ratio?: '1:1' | '3:4' | '4:3' | '9:16';
   /** 使用的模型 */
-  model?: 'ideogram' | 'flux' | 'jimeng';
+  model?: string;
 }
 
 /**
@@ -57,20 +58,29 @@ export interface ImageTextResult {
 export class ImageTextService {
   private readonly aiServiceUrl: string;
   private readonly aiServiceKey: string;
+  private readonly gptgodBaseUrl: string;
+  private readonly gptgodApiKey?: string;
 
   constructor(
     private configService: ConfigService,
     private promptService: PromptService,
+    private prisma: PrismaService,
   ) {
     this.aiServiceUrl = this.configService.get<string>('AI_SERVICE_URL') || '';
     this.aiServiceKey = this.configService.get<string>('AI_SERVICE_KEY') || '';
+    this.gptgodBaseUrl = this.configService.get<string>('GPTGOD_BASE_URL') || 'https://api.gptgod.online';
+    this.gptgodApiKey = this.configService.get<string>('GPTGOD_API_KEY') || undefined;
   }
 
   /**
    * 生成图文 - AI 直接生成带文字的图片
    */
   async generateImageText(input: ImageTextInput): Promise<ImageTextResult> {
-    const { topic, template, style = 'xiaohongshu', ratio = '3:4', model = 'ideogram' } = input;
+    const { topic, template, style = 'xiaohongshu', ratio = '3:4', model } = input;
+    const enabledModels = await this.getEnabledModelCodes();
+    const selectedModel = model
+      ? this.ensureModelEnabled(model, enabledModels)
+      : enabledModels[0] || 'ideogram';
 
     // 1. 用 LLM 生成文案
     const content = await this.generateContent(topic, template);
@@ -79,7 +89,7 @@ export class ImageTextService {
     const imagePrompt = this.buildImageTextPrompt(content, template, style, ratio);
 
     // 3. 调用图像生成 AI（Ideogram/Flux/即梦）
-    const imageUrl = await this.generateImage(imagePrompt, model, ratio);
+    const imageUrl = await this.generateImage(imagePrompt, selectedModel, ratio);
 
     return {
       content,
@@ -156,49 +166,39 @@ Requirements:
     // 根据不同模型调用不同的 API
     switch (model) {
       case 'ideogram':
-        return this.callIdeogram(prompt, ratio);
+        return this.callGptgodIdeogram(prompt, ratio);
       case 'flux':
-        return this.callFlux(prompt, ratio);
+        return this.callGptgodFlux(prompt, ratio);
+      case 'nano-banana':
+        return this.callGptgodNanoBanana(prompt, ratio);
       case 'jimeng':
         return this.callJimeng(prompt, ratio);
       default:
-        return this.callIdeogram(prompt, ratio);
+        return this.callGptgodIdeogram(prompt, ratio);
     }
   }
 
   /**
-   * 调用 Ideogram API（最擅长文字渲染）
+   * 调用 GPTGOD - Ideogram（OpenAI Images 格式）
    */
-  private async callIdeogram(prompt: string, ratio: string): Promise<string> {
-    const apiKey = this.configService.get<string>('IDEOGRAM_API_KEY');
-    
-    if (!apiKey) {
-      console.warn('IDEOGRAM_API_KEY not configured, returning placeholder');
+  private async callGptgodIdeogram(prompt: string, ratio: string): Promise<string> {
+    if (!this.gptgodApiKey) {
+      console.warn('GPTGOD_API_KEY not configured, returning placeholder');
       return this.getPlaceholderImage();
     }
 
-    const aspectRatios: Record<string, string> = {
-      '1:1': 'ASPECT_1_1',
-      '3:4': 'ASPECT_3_4',
-      '4:3': 'ASPECT_4_3',
-      '9:16': 'ASPECT_9_16',
-    };
+    const size = '1024x1024';
 
     try {
-      const response = await fetch('https://api.ideogram.ai/generate', {
+      const response = await fetch(`${this.gptgodBaseUrl}/ideogram/v1/images/generations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Api-Key': apiKey,
+          Authorization: `Bearer ${this.gptgodApiKey}`,
         },
         body: JSON.stringify({
-          image_request: {
-            prompt,
-            aspect_ratio: aspectRatios[ratio] || 'ASPECT_3_4',
-            model: 'V_2',
-            magic_prompt_option: 'AUTO',
-            style_type: 'DESIGN',
-          },
+          prompt,
+          size,
         }),
       });
 
@@ -206,8 +206,8 @@ Requirements:
         throw new Error(`Ideogram API error: ${response.status}`);
       }
 
-      const data = await response.json();
-      return data.data?.[0]?.url || this.getPlaceholderImage();
+      const data = await response.json().catch(() => ({}));
+      return data?.data?.[0]?.url || data?.imageUrl || data?.url || this.getPlaceholderImage();
     } catch (error) {
       console.error('Ideogram 调用失败:', error);
       return this.getPlaceholderImage();
@@ -215,38 +215,26 @@ Requirements:
   }
 
   /**
-   * 调用 Flux API
+   * 调用 GPTGOD - Flux（官方格式）
    */
-  private async callFlux(prompt: string, ratio: string): Promise<string> {
-    // Flux 通常通过 Replicate 或 FAL.ai 调用
-    const apiKey = this.configService.get<string>('FLUX_API_KEY');
-    
-    if (!apiKey) {
+  private async callGptgodFlux(prompt: string, ratio: string): Promise<string> {
+    if (!this.gptgodApiKey) {
       return this.getPlaceholderImage();
     }
 
-    const dimensions: Record<string, { width: number; height: number }> = {
-      '1:1': { width: 1024, height: 1024 },
-      '3:4': { width: 768, height: 1024 },
-      '4:3': { width: 1024, height: 768 },
-      '9:16': { width: 576, height: 1024 },
-    };
-
-    const size = dimensions[ratio] || dimensions['3:4'];
+    const { width, height } = this.getSizeByRatio(ratio);
 
     try {
-      // 使用 FAL.ai 的 Flux 接口
-      const response = await fetch('https://fal.run/fal-ai/flux/dev', {
+      const response = await fetch(`${this.gptgodBaseUrl}/flux/v1/image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Key ${apiKey}`,
+          Authorization: `Bearer ${this.gptgodApiKey}`,
         },
         body: JSON.stringify({
           prompt,
-          image_size: size,
-          num_inference_steps: 28,
-          guidance_scale: 3.5,
+          width,
+          height,
         }),
       });
 
@@ -254,10 +242,55 @@ Requirements:
         throw new Error(`Flux API error: ${response.status}`);
       }
 
-      const data = await response.json();
-      return data.images?.[0]?.url || this.getPlaceholderImage();
+      const data = await response.json().catch(() => ({}));
+      if (data?.url || data?.imageUrl || data?.data?.[0]?.url) {
+        return data?.url || data?.imageUrl || data?.data?.[0]?.url;
+      }
+
+      if (data?.id) {
+        const result = await this.pollFluxResult(String(data.id));
+        if (result) return result;
+      }
+
+      return this.getPlaceholderImage();
     } catch (error) {
       console.error('Flux 调用失败:', error);
+      return this.getPlaceholderImage();
+    }
+  }
+
+  /**
+   * 调用 GPTGOD - Nano-banana（OpenAI Images 格式）
+   */
+  private async callGptgodNanoBanana(prompt: string, ratio: string): Promise<string> {
+    if (!this.gptgodApiKey) {
+      return this.getPlaceholderImage();
+    }
+
+    const size = '1024x1024';
+
+    try {
+      const response = await fetch(`${this.gptgodBaseUrl}/v1/images/generations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.gptgodApiKey}`,
+        },
+        body: JSON.stringify({
+          prompt,
+          n: 1,
+          size,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Nano-banana API error: ${response.status}`);
+      }
+
+      const data = await response.json().catch(() => ({}));
+      return data?.data?.[0]?.url || data?.imageUrl || data?.url || this.getPlaceholderImage();
+    } catch (error) {
+      console.error('Nano-banana 调用失败:', error);
       return this.getPlaceholderImage();
     }
   }
@@ -297,6 +330,72 @@ Requirements:
       console.error('即梦调用失败:', error);
       return this.getPlaceholderImage();
     }
+  }
+
+  private async pollFluxResult(taskId: string): Promise<string | null> {
+    const maxAttempts = 10;
+    const delayMs = 2000;
+
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        const response = await fetch(`${this.gptgodBaseUrl}/flux/v1/get_result?id=${encodeURIComponent(taskId)}`, {
+          headers: {
+            Authorization: `Bearer ${this.gptgodApiKey}`,
+          },
+        });
+
+        if (!response.ok) {
+          await this.sleep(delayMs);
+          continue;
+        }
+
+        const data = await response.json().catch(() => ({}));
+        if (data?.status && data.status !== 'Ready') {
+          await this.sleep(delayMs);
+          continue;
+        }
+        const url =
+          data?.result ||
+          data?.url ||
+          data?.imageUrl ||
+          data?.data?.[0]?.url ||
+          data?.result?.url ||
+          data?.result?.imageUrl ||
+          data?.result?.data?.[0]?.url;
+        if (url) return url;
+      } catch {}
+
+      await this.sleep(delayMs);
+    }
+
+    return null;
+  }
+
+  private sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private getSizeByRatio(ratio?: string) {
+    const map: Record<string, { width: number; height: number; size: string }> = {
+      '1:1': { width: 1024, height: 1024, size: '1024x1024' },
+      '3:4': { width: 768, height: 1024, size: '768x1024' },
+      '4:3': { width: 1024, height: 768, size: '1024x768' },
+      '9:16': { width: 576, height: 1024, size: '576x1024' },
+    };
+
+    return map[ratio || ''] || map['3:4'];
+  }
+
+  private async getEnabledModelCodes() {
+    const models = await this.getModels();
+    return models.map((item) => item.id);
+  }
+
+  private ensureModelEnabled(model: string, enabled: string[]) {
+    if (!enabled.includes(model)) {
+      throw new BadRequestException('模型不可用或未启用');
+    }
+    return model;
   }
 
   /**
@@ -461,11 +560,32 @@ Requirements:
   /**
    * 获取可用的 AI 模型
    */
-  getModels(): Array<{ id: string; name: string; description: string; textQuality: number }> {
+  async getModels(): Promise<Array<{ id: string; name: string; description: string; textQuality: number }>> {
+    const supportedCodes = new Set(['ideogram', 'flux', 'nano-banana']);
+
+    const list = await this.prisma.category.findMany({
+      where: { type: 'model', status: 1 },
+      orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+    });
+
+    const mapped = list
+      .filter((item) => supportedCodes.has(item.code))
+      .map((item) => {
+        const cfg = (item.config || {}) as Record<string, unknown>;
+        return {
+          id: item.code,
+          name: item.name,
+          description: item.description || '',
+          textQuality: Number(cfg.quality ?? 4),
+        };
+      });
+
+    if (mapped.length > 0) return mapped;
+
     return [
       { id: 'ideogram', name: 'Ideogram', description: '文字渲染最强，小红书风格首选', textQuality: 5 },
       { id: 'flux', name: 'Flux', description: '艺术感强，画面精美', textQuality: 4 },
-      { id: 'jimeng', name: '即梦', description: '国内友好，中文支持好', textQuality: 4 },
+      { id: 'nano-banana', name: 'Nano-banana', description: '开放平台图像模型', textQuality: 4 },
     ];
   }
 }

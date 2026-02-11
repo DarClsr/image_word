@@ -91,6 +91,7 @@ export class WorksService {
       await this.queueService.addImageGenerationJob({
         taskId: result.taskId,
         userId,
+        memberType: user.memberType,
         prompt: dto.prompt,
         negativePrompt: dto.negativePrompt,
         styleId: dto.styleId,

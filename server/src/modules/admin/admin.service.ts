@@ -3,6 +3,7 @@
  */
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import * as dayjs from 'dayjs';
 
 @Injectable()
@@ -319,5 +320,73 @@ export class AdminService {
     if (diffDays < 7) return `${diffDays}天前`;
 
     return target.format('MM-DD HH:mm');
+  }
+
+  /**
+   * 查询审计日志
+   */
+  async getAuditLogs(query: {
+    page: number;
+    pageSize: number;
+    module?: string;
+    action?: string;
+    adminId?: number;
+    targetId?: number;
+    startDate?: string;
+    endDate?: string;
+    keyword?: string;
+  }) {
+    const { page, pageSize, module, action, adminId, targetId, startDate, endDate, keyword } = query;
+    const skip = (page - 1) * pageSize;
+
+    const where: Prisma.AuditLogWhereInput = {
+      ...(module ? { module } : {}),
+      ...(action ? { action } : {}),
+      ...(adminId ? { adminId } : {}),
+      ...(targetId ? { targetId } : {}),
+    };
+
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        const start = new Date(startDate);
+        if (!Number.isNaN(start.getTime())) {
+          where.createdAt.gte = start;
+        }
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        if (!Number.isNaN(end.getTime())) {
+          where.createdAt.lte = end;
+        }
+      }
+    }
+
+    if (keyword) {
+      where.admin = {
+        username: { contains: keyword, mode: 'insensitive' },
+      };
+    }
+
+    const [total, list] = await Promise.all([
+      this.prisma.auditLog.count({ where }),
+      this.prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+        include: {
+          admin: { select: { id: true, username: true, realName: true, role: true } },
+        },
+      }),
+    ]);
+
+    return {
+      list,
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 }

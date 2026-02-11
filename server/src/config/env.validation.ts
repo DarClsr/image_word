@@ -50,6 +50,10 @@ export const EnvSchema = z.object({
   AI_SERVICE_URL: z.string().url().optional(),
   AI_SERVICE_KEY: z.string().optional(),
 
+  // 视觉模型（图生文）
+  VISION_SERVICE_URL: z.string().url().optional(),
+  VISION_SERVICE_KEY: z.string().optional(),
+
   // LLM 大语言模型（提示词扩展）
   LLM_API_URL: z.string().url().default('https://api.deepseek.com/v1'),
   LLM_API_KEY: z.string().optional(),
@@ -59,6 +63,8 @@ export const EnvSchema = z.object({
   IDEOGRAM_API_KEY: z.string().optional(),
   FLUX_API_KEY: z.string().optional(),
   JIMENG_API_KEY: z.string().optional(),
+  GPTGOD_API_KEY: z.string().optional(),
+  GPTGOD_BASE_URL: z.string().optional(),
 
   // 安全配置
   ADMIN_LOGIN_MAX_FAIL: z.string().transform(Number).default('5'),

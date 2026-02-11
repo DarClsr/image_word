@@ -1,6 +1,22 @@
 /**
  * 风格库页面
  */
+import { categoryApi } from '../../services/api';
+
+const GRADIENTS = [
+  'linear-gradient(135deg, #DC2626, #F87171)',
+  'linear-gradient(135deg, #EA580C, #FB923C)',
+  'linear-gradient(135deg, #059669, #34D399)',
+  'linear-gradient(135deg, #0D9488, #5EEAD4)',
+  'linear-gradient(135deg, #7C3AED, #A78BFA)',
+  'linear-gradient(135deg, #8B5CF6, #C4B5FD)',
+  'linear-gradient(135deg, #DB2777, #F472B6)',
+  'linear-gradient(135deg, #EC4899, #F9A8D4)',
+  'linear-gradient(135deg, #0891B2, #22D3EE)',
+  'linear-gradient(135deg, #0284C7, #38BDF8)',
+  'linear-gradient(135deg, #6B7280, #9CA3AF)',
+  'linear-gradient(135deg, #4B5563, #9CA3AF)',
+];
 const app = getApp();
 
 Page({
@@ -17,7 +33,8 @@ Page({
     ],
     
     // 风格列表
-    styles: []
+    styles: [],
+    allStyles: []
   },
 
   onLoad() {
@@ -28,8 +45,7 @@ Page({
    * 加载风格列表
    */
   loadStyles() {
-    // TODO: 从后端获取风格列表
-    const allStyles = [
+    const fallbackStyles = [
       { id: 1, name: '山水水墨', desc: '国风山水意境', icon: '🏔️', gradient: 'linear-gradient(135deg, #DC2626, #F87171)', category: 'guofeng', count: 128 },
       { id: 2, name: '工笔花鸟', desc: '细腻传统画风', icon: '🦜', gradient: 'linear-gradient(135deg, #EA580C, #FB923C)', category: 'guofeng', count: 86 },
       { id: 3, name: '现代写实', desc: '真实光影效果', icon: '📷', gradient: 'linear-gradient(135deg, #059669, #34D399)', category: 'realistic', count: 256 },
@@ -43,8 +59,24 @@ Page({
       { id: 11, name: '极简线条', desc: '简约设计风', icon: '⬜', gradient: 'linear-gradient(135deg, #6B7280, #9CA3AF)', category: 'minimal', count: 78 },
       { id: 12, name: '几何抽象', desc: '现代艺术感', icon: '🔷', gradient: 'linear-gradient(135deg, #4B5563, #9CA3AF)', category: 'minimal', count: 64 }
     ];
-    
-    this.setData({ styles: allStyles });
+
+    return categoryApi
+      .getStyles()
+      .then((styles) => {
+        const mapped = (styles || []).map((item, index) => ({
+          id: item.id,
+          name: item.name,
+          desc: item.description || '',
+          icon: item.icon || '✨',
+          gradient: GRADIENTS[index % GRADIENTS.length],
+          category: item.code || 'all',
+          cover: item.cover || '',
+        }));
+        this.setData({ allStyles: mapped, styles: mapped });
+      })
+      .catch(() => {
+        this.setData({ allStyles: fallbackStyles, styles: fallbackStyles });
+      });
   },
 
   /**
@@ -66,8 +98,13 @@ Page({
    * 筛选风格
    */
   filterStyles(category) {
-    // TODO: 根据分类筛选风格
-    // 这里简单示例，实际应该调用 API 或从完整列表筛选
+    const allStyles = this.data.allStyles || [];
+    if (category === 'all') {
+      this.setData({ styles: allStyles });
+      return;
+    }
+    const filtered = allStyles.filter(item => item.category === category);
+    this.setData({ styles: filtered });
   },
 
   /**

@@ -1,7 +1,7 @@
 /**
  * 提示词服务 - AI 扩展与优化
  */
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 /**
@@ -209,7 +209,49 @@ ${style ? `风格：${style}` : ''}
    * 根据图片生成提示词（图生文）
    */
   async imageToPrompt(imageUrl: string): Promise<string> {
-    // TODO: 接入视觉模型（如 GPT-4V、Qwen-VL 等）
-    throw new BadRequestException('图生文功能开发中');
+    const visionUrl =
+      this.configService.get<string>('VISION_SERVICE_URL') ||
+      this.configService.get<string>('AI_SERVICE_URL');
+    const visionKey =
+      this.configService.get<string>('VISION_SERVICE_KEY') ||
+      this.configService.get<string>('AI_SERVICE_KEY');
+
+    if (!visionUrl) {
+      throw new ServiceUnavailableException('视觉模型服务未配置');
+    }
+
+    const endpoint = visionUrl.endsWith('/image-to-prompt')
+      ? visionUrl
+      : `${visionUrl.replace(/\\/+$/, '')}/image-to-prompt`;
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(visionKey ? { Authorization: `Bearer ${visionKey}` } : {}),
+      },
+      body: JSON.stringify({ imageUrl }),
+    });
+
+    if (!response.ok) {
+      throw new ServiceUnavailableException('视觉模型服务不可用');
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+      const data = await response.json().catch(() => ({}));
+      const prompt = data?.prompt || data?.text || data?.caption || data?.description;
+      if (prompt) {
+        return String(prompt);
+      }
+    }
+
+    const text = await response.text().catch(() => '');
+    if (text) {
+      return text.trim();
+    }
+
+    throw new ServiceUnavailableException('视觉模型返回格式不支持');
   }
 }

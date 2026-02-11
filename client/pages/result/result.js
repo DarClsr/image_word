@@ -1,12 +1,17 @@
 /**
  * 生成结果页
  */
+import { taskApi, worksApi } from '../../services/api';
+
 const app = getApp();
 
 Page({
   data: {
     // 生成参数
     params: {},
+
+    taskId: null,
+    worksId: null,
     
     // 图片列表
     images: [],
@@ -22,7 +27,12 @@ Page({
   },
 
   onLoad(options) {
-    // 解析参数
+    if (options.taskId) {
+      this.setData({ taskId: options.taskId });
+    }
+    if (options.worksId) {
+      this.setData({ worksId: Number(options.worksId) });
+    }
     if (options.params) {
       try {
         const params = JSON.parse(decodeURIComponent(options.params));
@@ -31,36 +41,62 @@ Page({
         console.error('解析参数失败:', e);
       }
     }
-    
-    // 加载结果数据
+
     this.loadResultData();
   },
 
   /**
    * 加载结果数据
    */
-  loadResultData() {
-    // TODO: 从后端获取生成结果
-    // 模拟数据
-    const mockImages = [
-      'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800',
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800',
-      'https://images.unsplash.com/photo-1482192505345-5655af888cc4?w=800',
-      'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?w=800'
-    ];
-    
-    const topic = this.data.params.topic || '冬日城市夜景海报';
-    
-    this.setData({
-      images: mockImages,
-      mainImage: mockImages[0],
-      currentIndex: 0,
-      copyText: {
-        title: topic,
-        summary: '霓虹与雪夜交织，展现城市的静谧与温度。细腻的光影勾勒出都市的轮廓，在寂静的冬夜里散发着温暖的气息。',
-        tags: ['#冬日', '#城市', '#夜景', '#海报', '#霓虹']
+  async loadResultData() {
+    try {
+      const worksId = this.data.worksId;
+      if (worksId) {
+        const works = await worksApi.getDetail(worksId);
+        const imageUrl = works.imageUrl || works.thumbnailUrl;
+        this.setData({
+          params: {
+            prompt: works.prompt,
+            negativePrompt: works.negativePrompt,
+            styleId: works.styleId,
+            modelId: works.modelId,
+            params: works.params || undefined,
+          },
+          images: imageUrl ? [imageUrl] : [],
+          mainImage: imageUrl || '',
+          currentIndex: 0,
+          copyText: {
+            title: works.prompt || '生成结果',
+            summary: works.negativePrompt || '',
+            tags: [works.style?.name, works.model?.name].filter(Boolean).map((tag) => `#${tag}`),
+          },
+        });
+        return;
       }
-    });
+
+      const taskId = this.data.taskId;
+      if (taskId) {
+        const status = await taskApi.getStatus(taskId);
+        if (status.status !== 'completed') {
+          app.showError('任务未完成，请稍后查看');
+          return;
+        }
+        const imageUrl = status.result?.imageUrl || status.result?.thumbnailUrl || '';
+        this.setData({
+          images: imageUrl ? [imageUrl] : [],
+          mainImage: imageUrl,
+          currentIndex: 0,
+          copyText: {
+            title: this.data.params.topic || '生成结果',
+            summary: '',
+            tags: [],
+          },
+        });
+      }
+    } catch (error) {
+      console.error('加载结果失败:', error);
+      app.showError(error.message || '加载结果失败');
+    }
   },
 
   /**
@@ -199,14 +235,61 @@ Page({
     
     wx.showModal({
       title: '高清生成',
-      content: '将消耗 2 次额度生成高清版本，是否继续？',
+      content: '将消耗额外额度生成高清版本，是否继续？',
       success: (res) => {
         if (res.confirm) {
-          // TODO: 调用高清生成 API
-          app.showError('高清生成功能开发中');
+          const params = this.buildHdParams();
+          wx.redirectTo({
+            url: `/pages/generating/generating?params=${encodeURIComponent(JSON.stringify(params))}`,
+          });
         }
       }
     });
+  },
+
+  /**
+   * 生成高清参数
+   */
+  buildHdParams() {
+    const baseParams = this.data.params || {};
+    const extra = baseParams.params || {};
+    const ratio = extra.ratio;
+    const baseWidth = extra.width || 1024;
+    const baseHeight = extra.height || 1024;
+    const { width, height } = this.getHdSize(ratio, baseWidth, baseHeight);
+
+    return {
+      ...baseParams,
+      params: {
+        ...extra,
+        width,
+        height,
+        count: 1,
+      },
+    };
+  },
+
+  /**
+   * 计算高清尺寸
+   */
+  getHdSize(ratio, width, height) {
+    const ratioMap = {
+      '1:1': { width: 1536, height: 1536 },
+      '3:4': { width: 1536, height: 2048 },
+      '4:3': { width: 2048, height: 1536 },
+      '9:16': { width: 1152, height: 2048 },
+    };
+
+    if (ratio && ratioMap[ratio]) {
+      return ratioMap[ratio];
+    }
+
+    const maxSize = 2048;
+    const scale = Math.min(maxSize / width, maxSize / height, 1.5);
+    return {
+      width: Math.round(width * scale),
+      height: Math.round(height * scale),
+    };
   },
 
   /**

@@ -32,6 +32,24 @@ describe('AppController (e2e)', () => {
           expect(res.body.status).toBe('ok');
         });
     });
+
+    it('/health (GET)', () => {
+      return request(app.getHttpServer())
+        .get('/api/health')
+        .expect(200)
+        .expect((res: request.Response) => {
+          expect(res.body.status).toBe('ok');
+        });
+    });
+
+    it('/health/ready (GET)', () => {
+      return request(app.getHttpServer())
+        .get('/api/health/ready')
+        .expect(200)
+        .expect((res: request.Response) => {
+          expect(res.body.status).toBe('ok');
+        });
+    });
   });
 
   describe('Category', () => {

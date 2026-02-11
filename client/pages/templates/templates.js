@@ -2,6 +2,7 @@
  * 模板库页面
  */
 import { formatNumber } from '../../utils/index';
+import { generationApi, templateApi, categoryApi } from '../../services/api';
 
 const app = getApp();
 
@@ -9,14 +10,8 @@ Page({
   data: {
     // 分类
     currentCategory: 'all',
-    categories: [
-      { label: '全部', value: 'all', icon: '✨' },
-      { label: '国风', value: 'guofeng', icon: '🏯' },
-      { label: '写实', value: 'realistic', icon: '📷' },
-      { label: '动漫', value: 'anime', icon: '🎨' },
-      { label: '插画', value: 'illustration', icon: '✏️' },
-      { label: '赛博', value: 'cyberpunk', icon: '🌃' }
-    ],
+    categories: [{ label: '全部', value: 'all', icon: '✨' }],
+    styleMap: {},
     
     // 模板列表
     templates: [],
@@ -30,7 +25,9 @@ Page({
   },
 
   onLoad() {
-    this.loadTemplates();
+    this.loadCategories().finally(() => {
+      this.loadTemplates();
+    });
   },
 
   onReachBottom() {
@@ -51,72 +48,39 @@ Page({
    */
   loadTemplates() {
     this.setData({ loading: true });
-    
-    // TODO: 调用真实 API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockData = [
-          {
-            id: '1',
-            imageUrl: '',
-            prompt: '春日樱花下的少女，国风水墨画风格，唯美意境，细腻光影',
-            model: 'SDXL',
-            style: '国风',
-            likes: 1280,
-            shares: 356
-          },
-          {
-            id: '2',
-            imageUrl: '',
-            prompt: '赛博朋克城市夜景，霓虹灯光，雨后街道，科幻氛围',
-            model: 'Flux',
-            style: '赛博',
-            likes: 892,
-            shares: 234
-          },
-          {
-            id: '3',
-            imageUrl: '',
-            prompt: '可爱猫咪插画，治愈系风格，柔和色彩，温馨场景',
-            model: 'DALL·E',
-            style: '插画',
-            likes: 2156,
-            shares: 678
-          },
-          {
-            id: '4',
-            imageUrl: '',
-            prompt: '山水画风格的日落场景，云雾缭绕，意境深远',
-            model: 'SDXL',
-            style: '国风',
-            likes: 756,
-            shares: 189
-          },
-          {
-            id: '5',
-            imageUrl: '',
-            prompt: '日系动漫风格少女，樱花树下，清新唯美',
-            model: 'Flux',
-            style: '动漫',
-            likes: 3421,
-            shares: 892
-          }
-        ];
-        
-        // 格式化数字显示
-        const templates = mockData.map(item => ({
+
+    const params = {
+      page: this.data.page,
+      pageSize: this.data.pageSize,
+      keyword: this.data.searchKeyword || undefined,
+    };
+
+    if (this.data.currentCategory !== 'all') {
+      const styleId = this.data.styleMap[this.data.currentCategory];
+      if (styleId) {
+        params.styleId = styleId;
+      }
+    }
+
+    return templateApi
+      .getList(params)
+      .then((res) => {
+        const list = Array.isArray(res) ? res : res.list || [];
+        const templates = list.map(item => ({
           ...item,
-          likesText: formatNumber(item.likes),
-          sharesText: formatNumber(item.shares)
+          likesText: formatNumber(item.likes || 0),
+          sharesText: formatNumber(item.shares || 0)
         }));
-        
+
         this.setData({
           templates,
-          loading: false
+          loading: false,
+          noMore: list.length < this.data.pageSize
         });
-        resolve();
-      }, 600);
-    });
+      })
+      .catch(() => {
+        this.setData({ templates: [], loading: false });
+      });
   },
 
   /**
@@ -125,12 +89,39 @@ Page({
   loadMoreTemplates() {
     const nextPage = this.data.page + 1;
     this.setData({ loading: true, page: nextPage });
-    
-    // TODO: 调用真实 API
-    setTimeout(() => {
-      // 模拟没有更多数据
-      this.setData({ loading: false, noMore: true });
-    }, 500);
+
+    const params = {
+      page: nextPage,
+      pageSize: this.data.pageSize,
+      keyword: this.data.searchKeyword || undefined,
+    };
+
+    if (this.data.currentCategory !== 'all') {
+      const styleId = this.data.styleMap[this.data.currentCategory];
+      if (styleId) {
+        params.styleId = styleId;
+      }
+    }
+
+    templateApi
+      .getList(params)
+      .then((res) => {
+        const list = Array.isArray(res) ? res : res.list || [];
+        const appended = list.map(item => ({
+          ...item,
+          likesText: formatNumber(item.likes || 0),
+          sharesText: formatNumber(item.shares || 0)
+        }));
+
+        this.setData({
+          templates: [...this.data.templates, ...appended],
+          loading: false,
+          noMore: list.length < this.data.pageSize
+        });
+      })
+      .catch(() => {
+        this.setData({ loading: false });
+      });
   },
 
   /**
@@ -138,7 +129,7 @@ Page({
    */
   onSearch(e) {
     const keyword = e.detail.value;
-    this.setData({ searchKeyword: keyword, page: 1 });
+    this.setData({ searchKeyword: keyword, page: 1, noMore: false });
     
     // 防抖处理
     if (this.searchTimer) clearTimeout(this.searchTimer);
@@ -151,7 +142,7 @@ Page({
    * 清除搜索
    */
   clearSearch() {
-    this.setData({ searchKeyword: '', page: 1 });
+    this.setData({ searchKeyword: '', page: 1, noMore: false });
     this.loadTemplates();
   },
 
@@ -161,7 +152,7 @@ Page({
   onCategoryChange(e) {
     const value = e.currentTarget.dataset.value;
     if (value === this.data.currentCategory) return;
-    
+
     this.setData({ currentCategory: value, page: 1, noMore: false });
     this.loadTemplates();
   },
@@ -197,25 +188,58 @@ Page({
    * 使用模板
    */
   useTemplate(template) {
-    // 跳转到首页并填充数据
-    wx.switchTab({
-      url: '/pages/home/home',
-      success: () => {
-        // 通过全局数据传递
-        app.globalData.templateData = {
-          topic: template.prompt,
-          style: template.style,
-          model: template.model
-        };
-        
-        // 通知首页更新
-        const pages = getCurrentPages();
-        const homePage = pages.find(p => p.route === 'pages/home/home');
-        if (homePage) {
-          homePage.setData({ topic: template.prompt });
+    if (!app.checkNeedLogin()) return;
+
+    app.showLoading('准备生成...');
+    generationApi
+      .getConfig()
+      .then((config) => {
+        const defaultStyleId = template.styleId || config.defaults?.styleId || config.styles?.[0]?.id;
+        const defaultModelId = template.modelId || config.defaults?.modelId || config.models?.[0]?.id;
+        if (!defaultStyleId || !defaultModelId) {
+          throw new Error('未配置默认风格或模型');
         }
-      }
-    });
+
+        const params = {
+          prompt: template.prompt,
+          styleId: defaultStyleId,
+          modelId: defaultModelId,
+        };
+
+        wx.navigateTo({
+          url: `/pages/generating/generating?params=${encodeURIComponent(JSON.stringify(params))}`,
+        });
+      })
+      .catch((error) => {
+        app.showError(error.message || '获取配置失败');
+      })
+      .finally(() => {
+        app.hideLoading();
+      });
+  },
+
+  /**
+   * 加载分类（风格）
+   */
+  loadCategories() {
+    return categoryApi
+      .getStyles()
+      .then((styles) => {
+        const categories = [{ label: '全部', value: 'all', icon: '✨' }];
+        const styleMap = {};
+
+        (styles || []).forEach((style) => {
+          categories.push({
+            label: style.name,
+            value: style.code,
+            icon: style.icon || '✨',
+          });
+          styleMap[style.code] = style.id;
+        });
+
+        this.setData({ categories, styleMap });
+      })
+      .catch(() => {});
   },
 
   /**

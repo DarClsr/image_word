@@ -214,6 +214,8 @@
             :loading="logLoading"
             :pagination="logPagination"
             striped
+            @update:page="onLogPageChange"
+            @update:page-size="onLogPageSizeChange"
           />
         </n-card>
       </n-tab-pane>
@@ -375,7 +377,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, h, computed } from 'vue';
+import { ref, reactive, h, computed, onMounted } from 'vue';
 import {
   NCard,
   NTabs,
@@ -404,6 +406,9 @@ import {
 import { AddOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5';
 import { PageHeader, ConfirmModal } from '@/components/Common';
 import { formatDateTime } from '@/utils/format';
+import { fetchCategories, createCategory, updateCategory, removeCategory } from '@/api/category';
+import { fetchSystemConfig, updateSystemConfig, fetchGenerationConfig, updateGenerationConfig, type GenerationDefaults } from '@/api/system';
+import { fetchAuditLogs } from '@/api/audit-log';
 
 const message = useMessage();
 
@@ -420,12 +425,15 @@ const configForm = reactive({
 
 const configSaving = ref(false);
 
-const handleSaveConfig = () => {
+const handleSaveConfig = async () => {
   configSaving.value = true;
-  setTimeout(() => {
-    configSaving.value = false;
+  try {
+    const data = await updateSystemConfig({ ...configForm });
+    Object.assign(configForm, data);
     message.success('配置保存成功');
-  }, 500);
+  } finally {
+    configSaving.value = false;
+  }
 };
 
 // ==================== 模型管理 ====================
@@ -443,12 +451,7 @@ interface ModelConfig {
 }
 
 const modelLoading = ref(false);
-const modelList = ref<ModelConfig[]>([
-  { id: 1, name: 'SDXL', code: 'sdxl', icon: '⚡', price: 1, speed: 'fast', quality: 4, description: '稳定高效，性价比之选', sort: 1, status: 1 },
-  { id: 2, name: 'Flux', code: 'flux', icon: '🎭', price: 2, speed: 'medium', quality: 5, description: '风格细腻，艺术感强', sort: 2, status: 1 },
-  { id: 3, name: 'DALL·E', code: 'dalle', icon: '🤖', price: 3, speed: 'medium', quality: 4, description: '理解力强，通用表现', sort: 3, status: 1 },
-  { id: 4, name: 'Midjourney', code: 'mj', icon: '🎨', price: 5, speed: 'slow', quality: 5, description: '顶级画质，创意无限', sort: 4, status: 0 },
-]);
+const modelList = ref<ModelConfig[]>([]);
 
 const speedOptions = [
   { label: '快速', value: 'fast' },
@@ -523,6 +526,44 @@ const modelRules = {
   price: { required: true, type: 'number' as const, message: '请输入积分价格', trigger: 'blur' },
 };
 
+const speedToNumber = (speed: 'fast' | 'medium' | 'slow') => {
+  if (speed === 'fast') return 4;
+  if (speed === 'medium') return 3;
+  return 1;
+};
+
+const numberToSpeed = (value?: number): 'fast' | 'medium' | 'slow' => {
+  if (!value) return 'medium';
+  if (value >= 4) return 'fast';
+  if (value >= 2) return 'medium';
+  return 'slow';
+};
+
+const loadModels = async () => {
+  modelLoading.value = true;
+  try {
+    const list = await fetchCategories({ type: 'model' });
+    modelList.value = list.map((item) => {
+      const cfg = (item as unknown as { config?: Record<string, unknown> }).config || {};
+      const speed = numberToSpeed(cfg.speed as number | undefined);
+      return {
+        id: item.id,
+        name: item.name,
+        code: item.code,
+        icon: item.icon || '',
+        price: Number(cfg.price ?? 1),
+        speed,
+        quality: Number(cfg.quality ?? 3),
+        description: item.description || '',
+        sort: item.sort,
+        status: item.status,
+      };
+    });
+  } finally {
+    modelLoading.value = false;
+  }
+};
+
 const handleAddModel = () => {
   modelModal.visible = true;
   modelModal.isEdit = false;
@@ -548,45 +589,40 @@ const handleSaveModel = async () => {
   try {
     await modelFormRef.value?.validate();
     modelModal.loading = true;
+    const config = {
+      price: modelForm.price,
+      speed: speedToNumber(modelForm.speed),
+      quality: modelForm.quality,
+    };
 
-    setTimeout(() => {
-      if (modelModal.isEdit) {
-        const index = modelList.value.findIndex((item) => item.id === modelModal.editId);
-        const existing = modelList.value[index];
-        if (index > -1 && existing) {
-          modelList.value[index] = {
-            id: existing.id,
-            name: modelForm.name,
-            code: modelForm.code,
-            icon: modelForm.icon,
-            price: modelForm.price,
-            speed: modelForm.speed,
-            quality: modelForm.quality,
-            description: modelForm.description,
-            sort: modelForm.sort,
-            status: modelForm.status,
-          };
-        }
-        message.success('编辑成功');
-      } else {
-        const newModel: ModelConfig = {
-          id: Date.now(),
-          name: modelForm.name,
-          code: modelForm.code,
-          icon: modelForm.icon,
-          price: modelForm.price,
-          speed: modelForm.speed,
-          quality: modelForm.quality,
-          description: modelForm.description,
-          sort: modelForm.sort,
-          status: modelForm.status,
-        };
-        modelList.value.push(newModel);
-        message.success('添加成功');
-      }
-      modelModal.visible = false;
-      modelModal.loading = false;
-    }, 500);
+    if (modelModal.isEdit && modelModal.editId) {
+      await updateCategory({
+        id: modelModal.editId,
+        name: modelForm.name,
+        icon: modelForm.icon || undefined,
+        description: modelForm.description || undefined,
+        sort: modelForm.sort,
+        status: modelForm.status,
+        config,
+      } as any);
+      message.success('编辑成功');
+    } else {
+      await createCategory({
+        name: modelForm.name,
+        code: modelForm.code,
+        type: 'model',
+        icon: modelForm.icon || undefined,
+        description: modelForm.description || undefined,
+        sort: modelForm.sort,
+        status: modelForm.status,
+        config,
+      } as any);
+      message.success('添加成功');
+    }
+
+    await loadModels();
+    modelModal.visible = false;
+    modelModal.loading = false;
   } catch {
     modelModal.loading = false;
   }
@@ -602,14 +638,7 @@ interface RatioConfig {
   status: 0 | 1;
 }
 
-const ratioList = ref<RatioConfig[]>([
-  { id: 1, label: '1:1 正方形', width: 1, height: 1, sort: 1, status: 1 },
-  { id: 2, label: '4:3 横版', width: 4, height: 3, sort: 2, status: 1 },
-  { id: 3, label: '3:4 竖版', width: 3, height: 4, sort: 3, status: 1 },
-  { id: 4, label: '16:9 宽屏', width: 16, height: 9, sort: 4, status: 1 },
-  { id: 5, label: '9:16 手机竖屏', width: 9, height: 16, sort: 5, status: 1 },
-  { id: 6, label: '2:3 海报', width: 2, height: 3, sort: 6, status: 0 },
-]);
+const ratioList = ref<RatioConfig[]>([]);
 
 const ratioColumns: DataTableColumns<RatioConfig> = [
   { title: '名称', key: 'label' },
@@ -680,37 +709,36 @@ const handleSaveRatio = async () => {
   try {
     await ratioFormRef.value?.validate();
     ratioModal.loading = true;
-
-    setTimeout(() => {
-      if (ratioModal.isEdit) {
-        const index = ratioList.value.findIndex((item) => item.id === ratioModal.editId);
-        const existing = ratioList.value[index];
-        if (index > -1 && existing) {
-          ratioList.value[index] = {
-            id: existing.id,
-            label: ratioForm.label,
-            width: ratioForm.width,
-            height: ratioForm.height,
-            sort: ratioForm.sort,
-            status: ratioForm.status,
-          };
-        }
-        message.success('编辑成功');
-      } else {
-        const newRatio: RatioConfig = {
-          id: Date.now(),
+    if (ratioModal.isEdit && ratioModal.editId) {
+      const index = ratioList.value.findIndex((item) => item.id === ratioModal.editId);
+      const existing = ratioList.value[index];
+      if (index > -1 && existing) {
+        ratioList.value[index] = {
+          id: existing.id,
           label: ratioForm.label,
           width: ratioForm.width,
           height: ratioForm.height,
           sort: ratioForm.sort,
           status: ratioForm.status,
         };
-        ratioList.value.push(newRatio);
-        message.success('添加成功');
       }
-      ratioModal.visible = false;
-      ratioModal.loading = false;
-    }, 500);
+      message.success('编辑成功');
+    } else {
+      const newRatio: RatioConfig = {
+        id: Date.now(),
+        label: ratioForm.label,
+        width: ratioForm.width,
+        height: ratioForm.height,
+        sort: ratioForm.sort,
+        status: ratioForm.status,
+      };
+      ratioList.value.push(newRatio);
+      message.success('添加成功');
+    }
+
+    await updateGenerationConfig({ ratios: ratioList.value });
+    ratioModal.visible = false;
+    ratioModal.loading = false;
   } catch {
     ratioModal.loading = false;
   }
@@ -726,12 +754,7 @@ interface CountConfig {
   status: 0 | 1;
 }
 
-const countList = ref<CountConfig[]>([
-  { id: 1, value: 1, label: '1 张', multiplier: 1, sort: 1, status: 1 },
-  { id: 2, value: 2, label: '2 张', multiplier: 1.8, sort: 2, status: 1 },
-  { id: 3, value: 4, label: '4 张', multiplier: 3.2, sort: 3, status: 1 },
-  { id: 4, value: 8, label: '8 张', multiplier: 6, sort: 4, status: 0 },
-]);
+const countList = ref<CountConfig[]>([]);
 
 const countColumns: DataTableColumns<CountConfig> = [
   { title: '数量', key: 'value', width: 60 },
@@ -802,37 +825,36 @@ const handleSaveCount = async () => {
   try {
     await countFormRef.value?.validate();
     countModal.loading = true;
-
-    setTimeout(() => {
-      if (countModal.isEdit) {
-        const index = countList.value.findIndex((item) => item.id === countModal.editId);
-        const existing = countList.value[index];
-        if (index > -1 && existing) {
-          countList.value[index] = {
-            id: existing.id,
-            value: countForm.value,
-            label: countForm.label,
-            multiplier: countForm.multiplier,
-            sort: countForm.sort,
-            status: countForm.status,
-          };
-        }
-        message.success('编辑成功');
-      } else {
-        const newCount: CountConfig = {
-          id: Date.now(),
+    if (countModal.isEdit && countModal.editId) {
+      const index = countList.value.findIndex((item) => item.id === countModal.editId);
+      const existing = countList.value[index];
+      if (index > -1 && existing) {
+        countList.value[index] = {
+          id: existing.id,
           value: countForm.value,
           label: countForm.label,
           multiplier: countForm.multiplier,
           sort: countForm.sort,
           status: countForm.status,
         };
-        countList.value.push(newCount);
-        message.success('添加成功');
       }
-      countModal.visible = false;
-      countModal.loading = false;
-    }, 500);
+      message.success('编辑成功');
+    } else {
+      const newCount: CountConfig = {
+        id: Date.now(),
+        value: countForm.value,
+        label: countForm.label,
+        multiplier: countForm.multiplier,
+        sort: countForm.sort,
+        status: countForm.status,
+      };
+      countList.value.push(newCount);
+      message.success('添加成功');
+    }
+
+    await updateGenerationConfig({ counts: countList.value });
+    countModal.visible = false;
+    countModal.loading = false;
   } catch {
     countModal.loading = false;
   }
@@ -845,6 +867,8 @@ const generateConfig = reactive({
   defaultCount: 1,
   maxSize: 2048,
 });
+
+const generationDefaults = ref<GenerationDefaults | null>(null);
 
 const generateSaving = ref(false);
 
@@ -862,10 +886,33 @@ const countSelectOptions = computed(() =>
 
 const handleSaveGenerate = () => {
   generateSaving.value = true;
-  setTimeout(() => {
+  const model = modelList.value.find((item) => item.code === generateConfig.defaultModel);
+  const ratioIndex = ratioList.value.findIndex(
+    (item) => `${item.width}:${item.height}` === generateConfig.defaultRatio,
+  );
+  const countIndex = countList.value.findIndex((item) => item.value === generateConfig.defaultCount);
+
+  if (!model || ratioIndex < 0 || countIndex < 0) {
     generateSaving.value = false;
-    message.success('生成配置保存成功');
-  }, 500);
+    message.error('默认配置项不完整，请检查模型/比例/数量');
+    return;
+  }
+
+  updateGenerationConfig({
+    defaults: {
+      styleId: generationDefaults.value?.styleId,
+      modelId: model.id,
+      ratioIndex,
+      countIndex,
+    },
+    maxSize: generateConfig.maxSize,
+  })
+    .then(() => {
+      message.success('生成配置保存成功');
+    })
+    .finally(() => {
+      generateSaving.value = false;
+    });
 };
 
 // ==================== 删除确认 ====================
@@ -877,20 +924,25 @@ const deleteConfirm = reactive({
   id: null as number | null,
 });
 
-const handleDeleteConfirm = () => {
+const handleDeleteConfirm = async () => {
+  if (!deleteConfirm.id) return;
   deleteConfirm.loading = true;
-  setTimeout(() => {
+  try {
     if (deleteConfirm.type === 'model') {
-      modelList.value = modelList.value.filter((item) => item.id !== deleteConfirm.id);
+      await removeCategory(deleteConfirm.id);
+      await loadModels();
     } else if (deleteConfirm.type === 'ratio') {
       ratioList.value = ratioList.value.filter((item) => item.id !== deleteConfirm.id);
+      await updateGenerationConfig({ ratios: ratioList.value });
     } else if (deleteConfirm.type === 'count') {
       countList.value = countList.value.filter((item) => item.id !== deleteConfirm.id);
+      await updateGenerationConfig({ counts: countList.value });
     }
+    message.success('删除成功');
+  } finally {
     deleteConfirm.visible = false;
     deleteConfirm.loading = false;
-    message.success('删除成功');
-  }, 500);
+  }
 };
 
 // ==================== 操作日志 ====================
@@ -929,20 +981,14 @@ interface AuditLog {
   createdAt: string;
 }
 
-const logList = ref<AuditLog[]>([
-  { id: 1, adminName: 'admin', action: 'login', module: 'system', targetId: null, description: '管理员登录', ip: '192.168.1.100', createdAt: '2026-01-26T08:30:00Z' },
-  { id: 2, adminName: 'admin', action: 'update', module: 'system', targetId: null, description: '更新模型配置', ip: '192.168.1.100', createdAt: '2026-01-26T08:25:00Z' },
-  { id: 3, adminName: 'admin', action: 'audit', module: 'works', targetId: 102, description: '审核通过作品 #102', ip: '192.168.1.100', createdAt: '2026-01-26T08:20:00Z' },
-  { id: 4, adminName: 'admin', action: 'ban', module: 'user', targetId: 45, description: '封禁用户 #45', ip: '192.168.1.100', createdAt: '2026-01-26T08:15:00Z' },
-  { id: 5, adminName: 'admin', action: 'create', module: 'category', targetId: 12, description: '创建分类「极简风格」', ip: '192.168.1.100', createdAt: '2026-01-26T08:10:00Z' },
-]);
+const logList = ref<AuditLog[]>([]);
 
 const logPagination = reactive({
   page: 1,
   pageSize: 10,
   showSizePicker: true,
   pageSizes: [10, 20, 50],
-  itemCount: 5,
+  itemCount: 0,
 });
 
 const logColumns: DataTableColumns<AuditLog> = [
@@ -986,9 +1032,89 @@ const logColumns: DataTableColumns<AuditLog> = [
   { title: '时间', key: 'createdAt', width: 160, render: (row) => formatDateTime(row.createdAt) },
 ];
 
-const handleSearchLog = () => {
-  logPagination.page = 1;
+const loadAuditLogs = async () => {
+  logLoading.value = true;
+  try {
+    const [start, end] = logQuery.dateRange || [];
+    const result = await fetchAuditLogs({
+      page: logPagination.page,
+      pageSize: logPagination.pageSize,
+      action: logQuery.action || undefined,
+      module: logQuery.module || undefined,
+      startDate: start ? new Date(start).toISOString() : undefined,
+      endDate: end ? new Date(end).toISOString() : undefined,
+    });
+
+    logList.value = result.list.map((item) => ({
+      id: item.id,
+      adminName: item.admin?.realName || item.admin?.username || `#${item.adminId}`,
+      action: item.action,
+      module: item.module,
+      targetId: item.targetId ?? null,
+      description: `${item.module}:${item.action}${item.targetId ? ` #${item.targetId}` : ''}`,
+      ip: item.ip,
+      createdAt: item.createdAt,
+    }));
+    logPagination.itemCount = result.total;
+  } finally {
+    logLoading.value = false;
+  }
 };
+
+const handleSearchLog = async () => {
+  logPagination.page = 1;
+  await loadAuditLogs();
+};
+
+const onLogPageChange = (page: number) => {
+  logPagination.page = page;
+  loadAuditLogs();
+};
+
+const onLogPageSizeChange = (pageSize: number) => {
+  logPagination.pageSize = pageSize;
+  logPagination.page = 1;
+  loadAuditLogs();
+};
+
+const loadSystemConfig = async () => {
+  const data = await fetchSystemConfig();
+  Object.assign(configForm, data);
+};
+
+const loadGenerationConfig = async () => {
+  const data = await fetchGenerationConfig();
+  ratioList.value = data.ratios || [];
+  countList.value = data.counts || [];
+  generateConfig.maxSize = data.maxSize || 2048;
+
+  if (data.defaults) {
+    generationDefaults.value = data.defaults;
+    const model = modelList.value.find((item) => item.id === data.defaults?.modelId);
+    if (model) {
+      generateConfig.defaultModel = model.code;
+    }
+    const ratio = ratioList.value[data.defaults.ratioIndex];
+    if (ratio) {
+      generateConfig.defaultRatio = `${ratio.width}:${ratio.height}`;
+    }
+    const count = countList.value[data.defaults.countIndex];
+    if (count) {
+      generateConfig.defaultCount = count.value;
+    }
+  }
+};
+
+const initPage = async () => {
+  await loadSystemConfig();
+  await loadModels();
+  await loadGenerationConfig();
+  await loadAuditLogs();
+};
+
+onMounted(() => {
+  initPage();
+});
 </script>
 
 <style scoped>

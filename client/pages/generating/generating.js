@@ -1,6 +1,8 @@
 /**
  * 生成中页面
  */
+import { worksApi, taskApi } from '../../services/api';
+
 const app = getApp();
 
 Page({
@@ -34,14 +36,16 @@ Page({
   /**
    * 开始生成
    */
-  startGenerating() {
-    // TODO: 调用真实 API 创建生成任务
-    // const res = await worksApi.create(this.data.params);
-    // this.setData({ taskId: res.taskId });
-    // this.startPolling();
-    
-    // 模拟生成过程
-    this.simulateGenerating();
+  async startGenerating() {
+    try {
+      const res = await worksApi.create(this.data.params);
+      this.setData({ taskId: res.taskId });
+      this.startPolling();
+    } catch (error) {
+      console.error('创建任务失败:', error);
+      app.showError(error.message || '提交失败');
+      wx.navigateBack();
+    }
   },
 
   /**
@@ -84,13 +88,51 @@ Page({
   startPolling() {
     this.pollTimer = setInterval(async () => {
       try {
-        // TODO: 调用真实 API 查询任务状态
-        // const status = await taskApi.getStatus(this.data.taskId);
-        // this.updateProgress(status);
+        const status = await taskApi.getStatus(this.data.taskId);
+        this.updateProgress(status);
       } catch (e) {
         console.error('查询状态失败:', e);
       }
     }, 2000);
+  },
+
+  updateProgress(status) {
+    if (!status) return;
+
+    if (status.status === 'pending') {
+      const positionText = status.queuePosition ? `当前排队位置：第 ${status.queuePosition} 位` : '正在排队';
+      this.setData({
+        progress: 15,
+        statusText: '排队中...',
+        progressHint: positionText
+      });
+      return;
+    }
+
+    if (status.status === 'processing') {
+      this.setData({
+        progress: 60,
+        statusText: '生成中...',
+        progressHint: '正在生成图像'
+      });
+      return;
+    }
+
+    if (status.status === 'completed') {
+      this.setData({
+        progress: 100,
+        statusText: '已完成',
+        progressHint: '生成成功，正在跳转...'
+      });
+      this.onGenerateComplete(status);
+      return;
+    }
+
+    if (status.status === 'failed') {
+      this.stopPolling();
+      app.showError(status.errorMsg || '生成失败');
+      wx.navigateBack();
+    }
   },
 
   /**
@@ -110,15 +152,18 @@ Page({
   /**
    * 生成完成
    */
-  onGenerateComplete() {
+  onGenerateComplete(status) {
     this.stopPolling();
-    
-    // 跳转到结果页
+    app.globalData.needRefreshWorks = true;
+    const taskId = status?.taskId || this.data.taskId;
+    const worksId = status?.worksId;
+
     setTimeout(() => {
+      const query = worksId ? `taskId=${taskId}&worksId=${worksId}` : `taskId=${taskId}`;
       wx.redirectTo({
-        url: `/pages/result/result?params=${encodeURIComponent(JSON.stringify(this.data.params))}`
+        url: `/pages/result/result?${query}`
       });
-    }, 500);
+    }, 300);
   },
 
   /**
@@ -147,11 +192,13 @@ Page({
         if (res.confirm) {
           this.stopPolling();
           
-          // TODO: 调用取消 API
-          // await taskApi.cancel(this.data.taskId);
-          
-          app.showError('已取消生成');
-          wx.navigateBack();
+          taskApi
+            .cancel(this.data.taskId)
+            .catch(() => {})
+            .finally(() => {
+              app.showError('已取消生成');
+              wx.navigateBack();
+            });
         }
       }
     });

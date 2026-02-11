@@ -58,10 +58,14 @@ Page({
         imageTextApi.getModels(),
       ]);
       
+      const modelList = models || [];
+      const currentModel = this.data.selectedModel;
+      const hasCurrent = modelList.some(item => item.id === currentModel);
       this.setData({
         templates: templates || [],
         styles: styles || [],
-        models: models || [],
+        models: modelList,
+        selectedModel: hasCurrent ? currentModel : (modelList[0]?.id || currentModel),
       });
     } catch (error) {
       console.error('加载配置失败:', error);
@@ -92,6 +96,7 @@ Page({
       models: [
         { id: 'ideogram', name: 'Ideogram', textQuality: 5 },
         { id: 'flux', name: 'Flux', textQuality: 4 },
+        { id: 'nano-banana', name: 'Nano-banana', textQuality: 4 },
       ],
     });
   },

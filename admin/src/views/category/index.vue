@@ -1,12 +1,20 @@
 <template>
   <section class="page">
     <PageHeader title="分类管理" subtitle="管理风格分类和模型分类">
-      <n-button type="primary" @click="handleCreate">
-        <template #icon>
-          <n-icon><AddOutline /></n-icon>
-        </template>
-        新增分类
-      </n-button>
+      <n-space>
+        <n-button @click="openSortModal">
+          <template #icon>
+            <n-icon><ReorderFourOutline /></n-icon>
+          </template>
+          排序管理
+        </n-button>
+        <n-button type="primary" @click="handleCreate">
+          <template #icon>
+            <n-icon><AddOutline /></n-icon>
+          </template>
+          新增分类
+        </n-button>
+      </n-space>
     </PageHeader>
 
     <!-- 搜索栏 -->
@@ -144,11 +152,45 @@
       :loading="deleteConfirm.loading"
       @confirm="handleDeleteConfirm"
     />
+
+    <!-- 排序管理 -->
+    <n-modal v-model:show="sortModal.visible" preset="card" title="分类排序" style="width: 520px">
+      <n-space vertical size="large">
+        <n-form label-placement="left" :show-feedback="false">
+          <n-form-item label="分类类型">
+            <n-select v-model:value="sortModal.type" :options="typeOptions" @update:value="handleSortTypeChange" />
+          </n-form-item>
+        </n-form>
+        <div class="sort-hint">拖拽调整顺序，保存后生效</div>
+        <div class="sort-list">
+          <div
+            v-for="(item, index) in sortList"
+            :key="item.id"
+            class="sort-item"
+            draggable="true"
+            @dragstart="onSortDragStart(index)"
+            @dragover.prevent
+            @drop="onSortDrop(index)"
+          >
+            <span class="drag-handle">☰</span>
+            <span class="sort-name">{{ item.name }}</span>
+            <span class="sort-code">{{ item.code }}</span>
+          </div>
+          <div v-if="sortList.length === 0" class="sort-empty">暂无分类</div>
+        </div>
+      </n-space>
+      <template #footer>
+        <n-space justify="end">
+          <n-button @click="sortModal.visible = false">取消</n-button>
+          <n-button type="primary" :loading="sortModal.loading" @click="handleSortSave">保存</n-button>
+        </n-space>
+      </template>
+    </n-modal>
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, h } from 'vue';
+import { ref, reactive, h, onMounted } from 'vue';
 import {
   NCard,
   NForm,
@@ -171,10 +213,11 @@ import {
   type FormInst,
   type DataTableColumns,
 } from 'naive-ui';
-import { AddOutline, SearchOutline, RefreshOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5';
+import { AddOutline, SearchOutline, RefreshOutline, CreateOutline, TrashOutline, ReorderFourOutline } from '@vicons/ionicons5';
 import { PageHeader, ConfirmModal } from '@/components/Common';
 import type { Category } from '@/types/category';
 import { formatDateTime } from '@/utils/format';
+import { fetchCategories, createCategory, updateCategory, removeCategory, updateCategorySort } from '@/api/category';
 
 const message = useMessage();
 
@@ -201,14 +244,8 @@ const statusOptions = [
 const loading = ref(false);
 
 /** 数据列表 */
-const dataList = ref<Category[]>([
-  { id: 1, name: '国风', code: 'chinese_style', type: 'style', icon: '🎨', description: '中国传统绘画风格', sort: 1, status: 1, createdAt: '2026-01-20T10:00:00Z', updatedAt: '2026-01-20T10:00:00Z' },
-  { id: 2, name: '赛博朋克', code: 'cyberpunk', type: 'style', icon: '🤖', description: '未来科技风格', sort: 2, status: 1, createdAt: '2026-01-20T10:00:00Z', updatedAt: '2026-01-20T10:00:00Z' },
-  { id: 3, name: '日漫', code: 'anime', type: 'style', icon: '🌸', description: '日本动漫风格', sort: 3, status: 1, createdAt: '2026-01-20T10:00:00Z', updatedAt: '2026-01-20T10:00:00Z' },
-  { id: 4, name: '写实', code: 'realistic', type: 'style', icon: '📷', description: '真实照片风格', sort: 4, status: 0, createdAt: '2026-01-20T10:00:00Z', updatedAt: '2026-01-20T10:00:00Z' },
-  { id: 5, name: 'SDXL', code: 'sdxl', type: 'model', icon: '⚡', description: 'Stable Diffusion XL', sort: 1, status: 1, createdAt: '2026-01-20T10:00:00Z', updatedAt: '2026-01-20T10:00:00Z' },
-  { id: 6, name: 'Flux', code: 'flux', type: 'model', icon: '🔥', description: 'Flux 模型', sort: 2, status: 1, createdAt: '2026-01-20T10:00:00Z', updatedAt: '2026-01-20T10:00:00Z' },
-]);
+const dataList = ref<Category[]>([]);
+const fullList = ref<Category[]>([]);
 
 /** 分页 */
 const paginationReactive = reactive({
@@ -216,7 +253,7 @@ const paginationReactive = reactive({
   pageSize: 10,
   showSizePicker: true,
   pageSizes: [10, 20, 50],
-  itemCount: 6,
+  itemCount: 0,
   prefix: ({ itemCount }: { itemCount: number | undefined }) => `共 ${itemCount ?? 0} 条`,
 });
 
@@ -310,10 +347,22 @@ const deleteConfirm = reactive({
   name: '',
 });
 
+/** 排序弹窗 */
+const sortModal = reactive({
+  visible: false,
+  loading: false,
+  fetching: false,
+  type: 'style' as 'style' | 'model',
+});
+
+const sortList = ref<Category[]>([]);
+const sortSourceList = ref<Category[]>([]);
+const sortDragIndex = ref<number | null>(null);
+
 /** 搜索 */
-const handleSearch = () => {
+const handleSearch = async () => {
   paginationReactive.page = 1;
-  // 调用 API
+  await loadData();
 };
 
 /** 重置 */
@@ -327,11 +376,13 @@ const handleReset = () => {
 /** 分页变化 */
 const onPageChange = (page: number) => {
   paginationReactive.page = page;
+  applyPagination();
 };
 
 const onPageSizeChange = (pageSize: number) => {
   paginationReactive.pageSize = pageSize;
   paginationReactive.page = 1;
+  applyPagination();
 };
 
 /** 新增 */
@@ -370,14 +421,18 @@ const handleDelete = (row: Category) => {
 };
 
 /** 确认删除 */
-const handleDeleteConfirm = () => {
+const handleDeleteConfirm = async () => {
+  if (!deleteConfirm.id) return;
   deleteConfirm.loading = true;
-  setTimeout(() => {
-    dataList.value = dataList.value.filter((item) => item.id !== deleteConfirm.id);
+  try {
+    await removeCategory(deleteConfirm.id);
+    fullList.value = fullList.value.filter((item) => item.id !== deleteConfirm.id);
+    applyPagination();
+    message.success('删除成功');
+  } finally {
     deleteConfirm.visible = false;
     deleteConfirm.loading = false;
-    message.success('删除成功');
-  }, 500);
+  }
 };
 
 /** 提交表单 */
@@ -386,51 +441,126 @@ const handleSubmit = async () => {
     await formRef.value?.validate();
     modal.loading = true;
 
-    setTimeout(() => {
-      if (modal.isEdit) {
-        const index = dataList.value.findIndex((item) => item.id === modal.editId);
-        const existing = dataList.value[index];
-        if (index > -1 && existing) {
-          dataList.value[index] = {
-            id: existing.id,
-            name: formData.name,
-            code: formData.code,
-            type: formData.type,
-            icon: formData.icon,
-            cover: formData.cover,
-            description: formData.description,
-            parentId: formData.parentId,
-            sort: formData.sort,
-            status: formData.status,
-            createdAt: existing.createdAt,
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        message.success('编辑成功');
-      } else {
-        const newCategory: Category = {
-          id: Date.now(),
-          name: formData.name,
-          code: formData.code,
-          type: formData.type,
-          icon: formData.icon,
-          cover: formData.cover,
-          description: formData.description,
-          sort: formData.sort,
-          status: formData.status,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        dataList.value.unshift(newCategory);
-        message.success('新增成功');
-      }
-      modal.visible = false;
-      modal.loading = false;
-    }, 500);
+    if (modal.isEdit && modal.editId) {
+      await updateCategory({
+        id: modal.editId,
+        name: formData.name,
+        icon: formData.icon || undefined,
+        cover: formData.cover || undefined,
+        description: formData.description || undefined,
+        parentId: formData.parentId > 0 ? formData.parentId : null,
+        sort: formData.sort,
+        status: formData.status,
+      });
+      message.success('编辑成功');
+    } else {
+      await createCategory({
+        name: formData.name,
+        code: formData.code,
+        type: formData.type,
+        icon: formData.icon || undefined,
+        cover: formData.cover || undefined,
+        description: formData.description || undefined,
+        parentId: formData.parentId > 0 ? formData.parentId : undefined,
+        sort: formData.sort,
+        status: formData.status,
+      });
+      message.success('新增成功');
+    }
+
+    await loadData();
+    modal.visible = false;
+    modal.loading = false;
   } catch {
     // 验证失败
   }
 };
+
+const applyPagination = () => {
+  const { page, pageSize } = paginationReactive;
+  const start = (page - 1) * pageSize;
+  dataList.value = fullList.value.slice(start, start + pageSize);
+  paginationReactive.itemCount = fullList.value.length;
+};
+
+const buildSortList = () => {
+  sortList.value = sortSourceList.value
+    .filter((item) => item.type === sortModal.type && !item.parentId)
+    .sort((a, b) => a.sort - b.sort || a.id - b.id);
+};
+
+const openSortModal = () => {
+  sortModal.visible = true;
+  sortModal.type = (queryParams.type as 'style' | 'model') || 'style';
+  loadSortSource();
+};
+
+const handleSortTypeChange = (value: 'style' | 'model') => {
+  sortModal.type = value;
+  loadSortSource();
+};
+
+const loadSortSource = async () => {
+  sortModal.fetching = true;
+  try {
+    sortSourceList.value = await fetchCategories({ type: sortModal.type });
+    buildSortList();
+  } finally {
+    sortModal.fetching = false;
+  }
+};
+
+const onSortDragStart = (index: number) => {
+  sortDragIndex.value = index;
+};
+
+const onSortDrop = (index: number) => {
+  if (sortDragIndex.value === null || sortDragIndex.value === index) return;
+  const list = [...sortList.value];
+  const [moved] = list.splice(sortDragIndex.value, 1);
+  list.splice(index, 0, moved);
+  sortList.value = list;
+  sortDragIndex.value = null;
+};
+
+const handleSortSave = async () => {
+  if (sortList.value.length === 0) {
+    sortModal.visible = false;
+    return;
+  }
+  sortModal.loading = true;
+  try {
+    const items = sortList.value.map((item, index) => ({
+      id: item.id,
+      sort: index,
+    }));
+    await updateCategorySort(items);
+    message.success('排序已更新');
+    sortModal.visible = false;
+    await loadData();
+  } finally {
+    sortModal.loading = false;
+  }
+};
+
+const loadData = async () => {
+  loading.value = true;
+  try {
+    const list = await fetchCategories({
+      type: queryParams.type ?? undefined,
+      status: queryParams.status ?? undefined,
+      keyword: queryParams.name || undefined,
+    });
+    fullList.value = list;
+    applyPagination();
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  loadData();
+});
 
 /** 重置表单 */
 const resetForm = () => {
@@ -467,5 +597,57 @@ const resetForm = () => {
 
 .table-card {
   border-radius: 12px;
+}
+
+.sort-hint {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.sort-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow: auto;
+  padding: 4px;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+}
+
+.sort-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: grab;
+}
+
+.sort-item:active {
+  cursor: grabbing;
+}
+
+.drag-handle {
+  font-size: 16px;
+  color: #9ca3af;
+}
+
+.sort-name {
+  font-weight: 500;
+}
+
+.sort-code {
+  margin-left: auto;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.sort-empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 16px 0;
 }
 </style>

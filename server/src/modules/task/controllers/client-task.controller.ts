@@ -5,6 +5,8 @@ import { Controller, Get, Delete, Param, Query, UseGuards } from '@nestjs/common
 import { TaskService } from '../task.service';
 import { ClientAuthGuard } from '../../../common/guards';
 import { CurrentUser } from '../../../common/decorators';
+import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
+import { QueryTaskSchema, QueryTaskInput } from '../schemas/task.schema';
 import { User } from '@prisma/client';
 
 @Controller('client/task')
@@ -32,7 +34,10 @@ export class ClientTaskController {
    * 获取我的任务列表
    */
   @Get()
-  async findMyTasks(@Query('status') status: string, @CurrentUser() user: User) {
-    return this.taskService.findByUser(user.id, status);
+  async findMyTasks(
+    @Query(new ZodValidationPipe(QueryTaskSchema)) query: QueryTaskInput,
+    @CurrentUser() user: User,
+  ) {
+    return this.taskService.findByUser(user.id, query.status);
   }
 }

@@ -8,6 +8,7 @@ import { Queue, Job } from 'bull';
 export interface ImageGenerationJob {
   taskId: string;
   userId: number;
+  memberType: string;
   prompt: string;
   negativePrompt?: string;
   styleId: number;
@@ -85,8 +86,15 @@ export class QueueService {
    * 根据用户会员类型确定优先级
    */
   private getJobPriority(data: ImageGenerationJob): number {
-    // TODO: 根据用户会员类型设置优先级
-    // Pro 用户优先级高（数字越小优先级越高）
-    return 10;
+    // 根据用户会员类型设置优先级（数字越小优先级越高）
+    switch (data.memberType) {
+      case 'pro':
+        return 1;
+      case 'basic':
+        return 5;
+      case 'free':
+      default:
+        return 10;
+    }
   }
 }

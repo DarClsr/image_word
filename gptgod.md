@@ -1,0 +1,324 @@
+# gptgod.online
+
+## Docs
+- 图片生成 > flux [flux 接口文档](https://gptgod.apifox.cn/4922184m0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) [官网格式](https://gptgod.apifox.cn/4791738m0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 5 上传自定义音频并续写 [续写自定义音频步骤介绍](https://gptgod.apifox.cn/4791654m0.md): 
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 [suno api 说明](https://gptgod.apifox.cn/7659249m0.md): 
+- 视频生成 > luma > luma(goamz格式) [goamz 格式luma](https://gptgod.apifox.cn/37962313f0.md): 普通 luma api 速度高峰期可能稍慢
+- 视频生成 > luma > luma(goamz格式) [goamz 格式lumavip](https://gptgod.apifox.cn/38333364f0.md): 普通 luma api 速度高峰期可能稍慢
+- 视频生成 > pika [pika 接口说明](https://gptgod.apifox.cn/5345645m0.md): 
+- 视频生成 > sora-2 > chat 格式 [可以@的人物说明](https://gptgod.apifox.cn/7499131m0.md): 
+- GPTs 相关 [GPTs相关接口文档](https://gptgod.apifox.cn/4820954m0.md): 
+- 智谱清言(glm) [智谱清言相关 api 接口文档](https://gptgod.apifox.cn/4831633m0.md): 
+- openai [介绍](https://gptgod.apifox.cn/4701711m0.md): 
+- openai [项目说明](https://gptgod.apifox.cn/4701712m0.md): 
+- openai [导言](https://gptgod.apifox.cn/4701713m0.md): 
+- openai [身份验证](https://gptgod.apifox.cn/4701714m0.md): 
+- openai [发出请求](https://gptgod.apifox.cn/4701715m0.md): 
+- openai [参数详情](https://gptgod.apifox.cn/4701716m0.md): 
+- openai > 聊天（Chat） [gpts 请求](https://gptgod.apifox.cn/4701717m0.md): 
+- openai > 聊天（Chat） [聊天完成块对象](https://gptgod.apifox.cn/4701718m0.md): 
+- openai > 自动补全（Completions） [完成对象](https://gptgod.apifox.cn/4701719m0.md): 
+- openai > 嵌入（Embeddings） [嵌入对象](https://gptgod.apifox.cn/4701720m0.md): 
+- openai > 微调（Fine-tuning） [ 微调作业对象](https://gptgod.apifox.cn/4701721m0.md): 
+- openai > 微调（Fine-tuning） [微调作业事件对象](https://gptgod.apifox.cn/4701722m0.md): 
+- openai > 图像（Images） [README](https://gptgod.apifox.cn/4701723m0.md): 
+- openai > 图像（Images） [图像对象](https://gptgod.apifox.cn/4701724m0.md): 
+- openai > 模型（Models） [模型对象](https://gptgod.apifox.cn/4701725m0.md): 
+- openai > 文件（Files） [README](https://gptgod.apifox.cn/4701726m0.md): 
+- openai > 文件（Files） [文件对象](https://gptgod.apifox.cn/4701727m0.md): 
+- openai > 审查（Moderations） [调节对象](https://gptgod.apifox.cn/4701728m0.md): 
+- openai > 助手测试版（AssistantsBeta） [辅助对象](https://gptgod.apifox.cn/4701729m0.md): 
+- openai > 助手测试版（AssistantsBeta） [辅助文件对象](https://gptgod.apifox.cn/4701730m0.md): 
+- openai > 线程数（Threads） [线程对象](https://gptgod.apifox.cn/4701731m0.md): 
+- openai > 留言（Messages） [消息对象](https://gptgod.apifox.cn/4701732m0.md): 
+- openai > 留言（Messages） [消息文件对象](https://gptgod.apifox.cn/4701733m0.md): 
+- openai > 运行（Runs） [运行对象](https://gptgod.apifox.cn/4701734m0.md): 
+- openai > 运行（Runs） [运行步骤对象](https://gptgod.apifox.cn/4701735m0.md): 
+- 异步 veo3 、gemini deepsearch 等 [转换接口说明](https://gptgod.apifox.cn/7183804m0.md): 
+
+## API Docs
+- 管理员接口 [查询账户信息](https://gptgod.apifox.cn/363066061e0.md): 
+- 文件服务 [文件上传(file)](https://gptgod.apifox.cn/192024362e0.md): 
+- 链接分析(url analysis) [链接总结(summary)](https://gptgod.apifox.cn/191714736e0.md): 
+- 链接分析(url analysis) [链接聊天(chat)](https://gptgod.apifox.cn/191714737e0.md): 
+- 链接分析(url analysis) [字幕导出(subtitle)](https://gptgod.apifox.cn/191714739e0.md): 
+- 图片生成 > flux > 官方格式 [ 生成图像(image)](https://gptgod.apifox.cn/201521146e0.md): 
+- 图片生成 > flux > 官方格式 [查询任务(get_result)](https://gptgod.apifox.cn/201790010e0.md): 
+- 图片生成 > flux > 官方格式 [提示词生成(chat)](https://gptgod.apifox.cn/201790133e0.md): 
+- 图片生成 > flux > 官方格式 [生成图像(chat 格式)](https://gptgod.apifox.cn/201790436e0.md): 
+- 图片生成 > flux > OpenAI Image 格式 [ 生成(generations)](https://gptgod.apifox.cn/201790138e0.md): 
+- 图片生成 > flux > OpenAI Image 格式 [创建图片编辑 Copy](https://gptgod.apifox.cn/317455914e0.md): 在给定原始图像和提示的情况下创建编辑或扩展图像。
+- 图片生成 > flux > chat 格式 [chat](https://gptgod.apifox.cn/311380964e0.md): 
+- 图片生成 > ideogram > openai images格式 [生成](https://gptgod.apifox.cn/210330674e0.md): 
+- 图片生成 > ideogram > openchat chat格式 [生成](https://gptgod.apifox.cn/210416793e0.md): 
+- 图片生成 > midjourney > 任务查询 [ListByCondition](https://gptgod.apifox.cn/241978649e0.md): 
+- 图片生成 > midjourney > 任务查询 [FetchFromTask](https://gptgod.apifox.cn/241978650e0.md): 
+- 图片生成 > midjourney > 任务查询 [ImageSeed](https://gptgod.apifox.cn/241978651e0.md): 
+- 图片生成 > midjourney > 任务提交 [Blend](https://gptgod.apifox.cn/241978652e0.md): 图生图、混图
+- 图片生成 > midjourney > 任务提交 [SwapFace](https://gptgod.apifox.cn/241978653e0.md): 因为政策原因 需要单独申请
+- 图片生成 > midjourney > 任务提交 [Describe](https://gptgod.apifox.cn/241978654e0.md): 图生文
+- 图片生成 > midjourney > 任务提交 [Imagine](https://gptgod.apifox.cn/241978655e0.md): 文生图，文图生图
+- 图片生成 > midjourney > 任务提交 [Shorten](https://gptgod.apifox.cn/241978656e0.md): Prompt分析
+- 图片生成 > midjourney > 任务提交 [Modal](https://gptgod.apifox.cn/241978657e0.md): 提交局部重绘、ZOOM
+- 图片生成 > midjourney > 任务提交 [Action](https://gptgod.apifox.cn/241978658e0.md): 所有的关联按钮动作UPSCALE、VARIATION、REROLL、ZOOM等
+- 图片生成 > midjourney > 任务提交 [Change](https://gptgod.apifox.cn/241978659e0.md): UPSCALE、VARIATION、REROLL
+- 图片生成 > gpt4oimage > chat 格式 [gpt-4o-image-vip](https://gptgod.apifox.cn/280053706e0.md): 
+- 图片生成 > gpt4oimage > image/generations 格式(dalle 格式) [创建图像（也可编辑图片，推荐使用） Copy](https://gptgod.apifox.cn/398643521e0.md): [图片](https://platform.openai.com/docs/api-reference/images)
+- 图片生成 > gpt4oimage > image/generations 格式(dalle 格式) [创建图片编辑](https://gptgod.apifox.cn/280180697e0.md): 在给定原始图像和提示的情况下创建编辑或扩展图像。
+- 图片生成 > gpt4oimage > 图片借用OpenAI官方视频格式(适配 newapi) [创建图片](https://gptgod.apifox.cn/382641604e0.md): 
+- 图片生成 > gpt4oimage > 图片借用OpenAI官方视频格式(适配 newapi) [查询图片详情](https://gptgod.apifox.cn/382641605e0.md): 
+- 图片生成 > gpt4oimage > 图片借用OpenAI官方视频格式(适配 newapi) [下载图片(不推荐该方式，查询视频接口有返回 url的)](https://gptgod.apifox.cn/382641606e0.md): 
+- 图片生成 > gpt4oimage > 图片借用OpenAI官方视频格式(适配 newapi) [编辑图片(remix)](https://gptgod.apifox.cn/382641607e0.md): 
+- 图片生成 > nano-banana > chat 格式 [带图 chat](https://gptgod.apifox.cn/342754020e0.md): 
+- 图片生成 > nano-banana > chat 格式 [content text 中带图](https://gptgod.apifox.cn/350875788e0.md): 
+- 图片生成 > nano-banana > chat 格式 [chat](https://gptgod.apifox.cn/341602743e0.md): 
+- 图片生成 > nano-banana > image/generations 格式(dalle 格式) [创建图像（也可编辑图片，推荐使用）](https://gptgod.apifox.cn/341602744e0.md): [图片](https://platform.openai.com/docs/api-reference/images)
+- 图片生成 > nano-banana > image/generations 格式(dalle 格式) [创建图片编辑](https://gptgod.apifox.cn/341602745e0.md): 在给定原始图像和提示的情况下创建编辑或扩展图像。
+- 图片生成 > bytedance > seedream-v4 > chat 格式 [带图 chat](https://gptgod.apifox.cn/350631760e0.md): 
+- 图片生成 > bytedance > seedream-v4 > chat 格式 [chat](https://gptgod.apifox.cn/350631761e0.md): 
+- 图片生成 > bytedance > seedream-v4 > image/generations 格式(dalle 格式) [创建图像](https://gptgod.apifox.cn/350631762e0.md): [图片](https://platform.openai.com/docs/api-reference/images)
+- 图片生成 > bytedance > seedream-v4 > image/generations 格式(dalle 格式) [创建图片编辑](https://gptgod.apifox.cn/350631763e0.md): 在给定原始图像和提示的情况下创建编辑或扩展图像。
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 所有接口 [音乐生成(generations)](https://gptgod.apifox.cn/196377524e0.md): 生成音乐接口, 可以直接生成也可续写音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 所有接口 [音乐链接转成suno(upload)](https://gptgod.apifox.cn/196331407e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 所有接口 [查询任务(feed)](https://gptgod.apifox.cn/196388981e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 所有接口 [ 生成歌词](https://gptgod.apifox.cn/196430276e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 所有接口 [ 查询歌词](https://gptgod.apifox.cn/196441309e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 所有接口 [获取完整音乐(concat)](https://gptgod.apifox.cn/208621049e0.md): 续写音乐之后，获取原音乐和续写音乐的整合完整音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景1 生成自定义音乐(带歌词) [音乐生成(generations)](https://gptgod.apifox.cn/196414108e0.md): 生成音乐接口, 可以直接生成也可续写音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景1 生成自定义音乐(带歌词) [查询任务(feed)](https://gptgod.apifox.cn/196414886e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 2 通过提示词直接生成音乐(带歌词) [音乐生成(generations)](https://gptgod.apifox.cn/196420726e0.md): 生成音乐接口, 可以直接生成也可续写音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 2 通过提示词直接生成音乐(带歌词) [查询任务(feed)](https://gptgod.apifox.cn/196420727e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 3 生成自定义音乐(纯音乐) [音乐生成(generations)](https://gptgod.apifox.cn/196421118e0.md): 生成音乐接口, 可以直接生成也可续写音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 3 生成自定义音乐(纯音乐) [查询任务(feed)](https://gptgod.apifox.cn/196421119e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 4 通过提示词直接生成音乐(纯音乐) [音乐生成(generations)](https://gptgod.apifox.cn/196424742e0.md): 生成音乐接口, 可以直接生成也可续写音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 4 通过提示词直接生成音乐(纯音乐) [查询任务(feed)](https://gptgod.apifox.cn/196424743e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 5 上传自定义音频并续写 [音乐链接转成suno(upload)](https://gptgod.apifox.cn/196443051e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 5 上传自定义音频并续写 [音乐生成(generations)](https://gptgod.apifox.cn/196443002e0.md): 生成音乐接口, 可以直接生成也可续写音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 5 上传自定义音频并续写 [查询任务(feed)](https://gptgod.apifox.cn/196443385e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 6 续写音乐并获取完整音乐 [步骤 1 音乐生成](https://gptgod.apifox.cn/208622134e0.md): 生成音乐接口, 可以直接生成也可续写音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 6 续写音乐并获取完整音乐 [步骤 2 查询任务](https://gptgod.apifox.cn/208622542e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 6 续写音乐并获取完整音乐 [步骤 3 扩展音乐](https://gptgod.apifox.cn/208634612e0.md): 生成音乐接口, 可以直接生成也可续写音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 6 续写音乐并获取完整音乐 [步骤 4 查询拓展的任务](https://gptgod.apifox.cn/208635535e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 6 续写音乐并获取完整音乐 [步骤 5 获取完整音乐](https://gptgod.apifox.cn/208636948e0.md): 续写音乐之后，获取原音乐和续写音乐的整合完整音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 6 续写音乐并获取完整音乐 [步骤 6 查询完整音乐的任务](https://gptgod.apifox.cn/208640790e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 7 Cover音乐(音乐翻版，修改风格) [步骤 1 音乐生成](https://gptgod.apifox.cn/222087277e0.md): 生成音乐接口, 可以直接生成也可续写音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 7 Cover音乐(音乐翻版，修改风格) [步骤 2 查询任务](https://gptgod.apifox.cn/222087278e0.md): 
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 7 Cover音乐(音乐翻版，修改风格) [步骤 3 Cover 音乐](https://gptgod.apifox.cn/222087280e0.md): 生成音乐接口, 可以直接生成也可续写音乐
+- 音乐生成 > suno > suno官网原生格式(已废弃) > 场景 7 Cover音乐(音乐翻版，修改风格) [步骤 4 查询拓展的任务](https://gptgod.apifox.cn/222087281e0.md): 
+- 音乐生成 > suno > 自定义格式(已废弃) [音乐生成(create)](https://gptgod.apifox.cn/191714735e0.md): 
+- 音乐生成 > suno > 自定义格式(已废弃) [查询任务(feed)](https://gptgod.apifox.cn/191714734e0.md): 
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景1-灵感模式 [场景1 - 灵感模式生成音乐](https://gptgod.apifox.cn/375802961e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景2-自定义模式 [场景2 - 自定义歌词、标题和风格](https://gptgod.apifox.cn/375802962e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景3-纯音乐自定义 [场景3 - 生成纯音乐（无人声）](https://gptgod.apifox.cn/375802963e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景4-纯音乐灵感 [场景4 - 灵感模式生成纯音乐](https://gptgod.apifox.cn/375802964e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景5-续写音频 [场景5 - 续写/扩展已有音频](https://gptgod.apifox.cn/375802965e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景6-混音重制 [场景6 - 混音重制（使用参考音频）](https://gptgod.apifox.cn/375802966e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景7-替换片段 [场景7 - 替换歌曲指定片段](https://gptgod.apifox.cn/375802967e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景8-全轨分离 [场景8 - 全轨声曲分离](https://gptgod.apifox.cn/375802968e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景9-人声分离 [场景9 - 人声分离](https://gptgod.apifox.cn/375802969e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景10-改写 [场景10 - 改写（重新生成）](https://gptgod.apifox.cn/375802970e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 场景11-重新填词 [场景11 - 重新填词 (Overpainting)](https://gptgod.apifox.cn/375802971e0.md): ## 场景说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 查询结果 [查询生成任务的结果](https://gptgod.apifox.cn/375802972e0.md): ## 接口说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 音频上传 [上传自定义音频文件](https://gptgod.apifox.cn/375802973e0.md): ## 接口说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > MIDI操作 [获取音乐的MIDI数据](https://gptgod.apifox.cn/375802974e0.md): ## 接口说明
+- 音乐生成 > suno > 支持 newapi,rixapi 接入 > 辅助工具 [扩展Style Tags（风格标签）](https://gptgod.apifox.cn/375802975e0.md): ## 接口说明
+- 音乐生成 > udio > 官方接口格式 [生成音乐](https://gptgod.apifox.cn/235376152e0.md): 
+- 音乐生成 > udio > 官方接口格式 [查询任务](https://gptgod.apifox.cn/235379409e0.md): 
+- 音乐生成 > udio > 官方接口格式 [生成歌词](https://gptgod.apifox.cn/235383127e0.md): 
+- 音乐生成 > udio > 兼容 openai chat格式 [生成音乐](https://gptgod.apifox.cn/235593690e0.md): 
+- 视频生成 > vidu(官方格式) > 普通 [vidu(chat格式)](https://gptgod.apifox.cn/200259511e0.md): 
+- 视频生成 > vidu(官方格式) > 普通 [创建视频(tasks)](https://gptgod.apifox.cn/199843097e0.md): 
+- 视频生成 > vidu(官方格式) > 普通 [视频状态(state)](https://gptgod.apifox.cn/199843330e0.md): 
+- 视频生成 > vidu(官方格式) > 普通 [视频查询(tasks-get)](https://gptgod.apifox.cn/200168189e0.md): 
+- 视频生成 > vidu(官方格式) > 普通 [高清视频(tasks)](https://gptgod.apifox.cn/200256028e0.md): 
+- 视频生成 > runway > 官方格式 [生成视频(tasks)](https://gptgod.apifox.cn/205730255e0.md): 
+- 视频生成 > runway > 官方格式 [查询任务](https://gptgod.apifox.cn/205736474e0.md): 
+- 视频生成 > runway > chat 格式 [生成视频](https://gptgod.apifox.cn/205766282e0.md): 
+- 视频生成 > runway > vip(更快无水印) > 官方格式 [生成视频(tasks)](https://gptgod.apifox.cn/210651649e0.md): 
+- 视频生成 > runway > vip(更快无水印) > 官方格式 [查询任务](https://gptgod.apifox.cn/210651650e0.md): 
+- 视频生成 > runway > vip(更快无水印) > chat 格式 [生成视频](https://gptgod.apifox.cn/210651651e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式lumavip⚡️ [Chat格式lumavip](https://gptgod.apifox.cn/192801280e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式lumavip⚡️ [视频生成(generations)](https://gptgod.apifox.cn/191714731e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式lumavip⚡️ [查询任务(task)](https://gptgod.apifox.cn/191714732e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式lumavip⚡️ [视频扩展(extend)](https://gptgod.apifox.cn/191714733e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式lumapro🚀 （优先保证稳定性） [Chat格式lumapro](https://gptgod.apifox.cn/209447130e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式lumapro🚀 （优先保证稳定性） [视频生成(generations)](https://gptgod.apifox.cn/209447131e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式lumapro🚀 （优先保证稳定性） [查询任务(task)](https://gptgod.apifox.cn/209447132e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式lumapro🚀 （优先保证稳定性） [视频扩展(extend)](https://gptgod.apifox.cn/209447133e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式luma [Chat格式luma](https://gptgod.apifox.cn/192803641e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式luma [视频生成(generations)](https://gptgod.apifox.cn/191714728e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式luma [查询任务(task)](https://gptgod.apifox.cn/191714730e0.md): 
+- 视频生成 > luma > luma(官方格式) > 官方格式luma [视频拓展(extend)](https://gptgod.apifox.cn/191714729e0.md): 
+- 视频生成 > luma > luma(goamz格式) > goamz 格式luma [视频生成(generations)](https://gptgod.apifox.cn/194521475e0.md): 
+- 视频生成 > luma > luma(goamz格式) > goamz 格式luma [查询任务(task)](https://gptgod.apifox.cn/194521476e0.md): 
+- 视频生成 > luma > luma(goamz格式) > goamz 格式luma [视频拓展(extend)](https://gptgod.apifox.cn/194521477e0.md): 
+- 视频生成 > luma > luma(goamz格式) > goamz 格式lumavip [视频生成(generations)](https://gptgod.apifox.cn/196459648e0.md): 
+- 视频生成 > luma > luma(goamz格式) > goamz 格式lumavip [查询任务(task)](https://gptgod.apifox.cn/196459649e0.md): 
+- 视频生成 > luma > luma(goamz格式) > goamz 格式lumavip [视频拓展(extend)](https://gptgod.apifox.cn/196459650e0.md): 
+- 视频生成 > luma > luma(chatgpt-next-web格式) [视频生成(generations)](https://gptgod.apifox.cn/211528923e0.md): 
+- 视频生成 > luma > luma(chatgpt-next-web格式) [视频扩展(extend)](https://gptgod.apifox.cn/211528925e0.md): 
+- 视频生成 > luma > luma(chatgpt-next-web格式) [查询任务(task)](https://gptgod.apifox.cn/211528924e0.md): 
+- 视频生成 > luma > luma(chatgpt-next-web格式) [Chat格式lumavip](https://gptgod.apifox.cn/211528922e0.md): 
+- 视频生成 > 可灵(官方格式) [图像生成（暂不支持）](https://gptgod.apifox.cn/215962466e0.md): 
+- 视频生成 > 可灵(官方格式) [文生视频](https://gptgod.apifox.cn/215962467e0.md): 
+- 视频生成 > 可灵(官方格式) [图生视频](https://gptgod.apifox.cn/215962468e0.md): 
+- 视频生成 > 可灵(官方格式) [查询任务](https://gptgod.apifox.cn/215962469e0.md): 
+- 视频生成 > pika > 官方格式 [生成视频](https://gptgod.apifox.cn/226557181e0.md): 
+- 视频生成 > pika > 官方格式 [查询任务](https://gptgod.apifox.cn/226574022e0.md): 
+- 视频生成 > pika > openai chat 兼容格式 [生成视频](https://gptgod.apifox.cn/226641711e0.md): 
+- 视频生成 > pixverse(变身毒液效果等) > pixverse(官方格式)(普通) [创建视频](https://gptgod.apifox.cn/233354953e0.md): 
+- 视频生成 > pixverse(变身毒液效果等) > pixverse(官方格式)(普通) [查询视频](https://gptgod.apifox.cn/233365365e0.md): 
+- 视频生成 > pixverse(变身毒液效果等) > pixverse(官方格式)(普通) [获取特效模版](https://gptgod.apifox.cn/233431603e0.md): 
+- 视频生成 > pixverse(变身毒液效果等) > pixverse(官方格式)(VIP) [创建视频](https://gptgod.apifox.cn/233444587e0.md): 
+- 视频生成 > pixverse(变身毒液效果等) > pixverse(官方格式)(VIP) [查询视频](https://gptgod.apifox.cn/233444588e0.md): 
+- 视频生成 > pixverse(变身毒液效果等) > pixverse(官方格式)(VIP) [获取特效模版](https://gptgod.apifox.cn/233444589e0.md): 
+- 视频生成 > sora > 官方格式 [创建视频](https://gptgod.apifox.cn/242974904e0.md): 
+- 视频生成 > sora > 官方格式 [查询视频](https://gptgod.apifox.cn/242975608e0.md): 
+- 视频生成 > sora > openai chat 格式 [生成视频](https://gptgod.apifox.cn/244440741e0.md): 
+- 视频生成 > veo > 视频统一格式 [创建视频](https://gptgod.apifox.cn/307600668e0.md): 
+- 视频生成 > veo > 视频统一格式 [查询任务](https://gptgod.apifox.cn/307600679e0.md): 
+- 视频生成 > veo > 视频统一格式 [创建视频，带图片](https://gptgod.apifox.cn/307616275e0.md): 
+- 视频生成 > veo > newapi 视频格式 [创建视频](https://gptgod.apifox.cn/353285914e0.md): 
+- 视频生成 > veo > newapi 视频格式 [查询任务](https://gptgod.apifox.cn/353285915e0.md): 
+- 视频生成 > veo > newapi 视频格式 [创建视频，带图片](https://gptgod.apifox.cn/353285916e0.md): 
+- 视频生成 > veo > chat 格式 [流式请求](https://gptgod.apifox.cn/307615543e0.md): 
+- 视频生成 > veo > chat 格式 [非流请求](https://gptgod.apifox.cn/307615546e0.md): 
+- 视频生成 > veo > chat 格式 [带图片请求](https://gptgod.apifox.cn/307615549e0.md): 
+- 视频生成 > veo > chat 格式 [不同比例的视频(横竖屏)](https://gptgod.apifox.cn/348209627e0.md): 
+- 视频生成 > veo > OpenAI官方视频格式(适配 newapi)  [创建视频](https://gptgod.apifox.cn/360267178e0.md): 
+- 视频生成 > veo > OpenAI官方视频格式(适配 newapi)  [查询视频详情](https://gptgod.apifox.cn/360267179e0.md): 
+- 视频生成 > veo > OpenAI官方视频格式(适配 newapi)  [下载视频(不推荐该方式，查询视频接口有返回 url的)](https://gptgod.apifox.cn/360267180e0.md): 
+- 视频生成 > veo > OpenAI官方视频格式(适配 newapi)  [编辑视频(remix)(不支持)](https://gptgod.apifox.cn/360267181e0.md): 
+- 视频生成 > sora-2 > 视频统一格式 [创建视频 带图片](https://gptgod.apifox.cn/357791817e0.md): 
+- 视频生成 > sora-2 > 视频统一格式 [创建视频 （带 Character）](https://gptgod.apifox.cn/369450726e0.md): 
+- 视频生成 > sora-2 > 视频统一格式 [创建视频](https://gptgod.apifox.cn/357788001e0.md): 
+- 视频生成 > sora-2 > 视频统一格式 [查询任务](https://gptgod.apifox.cn/357788002e0.md): 
+- 视频生成 > sora-2 > chat 格式 [连续修改生成视频](https://gptgod.apifox.cn/360102353e0.md): 
+- 视频生成 > sora-2 > chat 格式 [使用公共人物(例如奥特曼)生成视频](https://gptgod.apifox.cn/360114205e0.md): 
+- 视频生成 > sora-2 > chat 格式 [流式请求](https://gptgod.apifox.cn/357788004e0.md): 
+- 视频生成 > sora-2 > chat 格式 [非流请求](https://gptgod.apifox.cn/357788005e0.md): 
+- 视频生成 > sora-2 > chat 格式 [带图片请求](https://gptgod.apifox.cn/357788006e0.md): 
+- 视频生成 > sora-2 > chat 格式 [不同比例的视频(横竖屏)](https://gptgod.apifox.cn/357788007e0.md): 
+- 视频生成 > sora-2 > OpenAI官方视频格式(适配 newapi) [创建视频](https://gptgod.apifox.cn/358727209e0.md): 
+- 视频生成 > sora-2 > OpenAI官方视频格式(适配 newapi) [查询视频详情](https://gptgod.apifox.cn/358733180e0.md): 
+- 视频生成 > sora-2 > OpenAI官方视频格式(适配 newapi) [下载视频(不推荐该方式，查询视频接口有返回 url的)](https://gptgod.apifox.cn/358801597e0.md): 
+- 视频生成 > sora-2 > OpenAI官方视频格式(适配 newapi) [编辑视频(remix)](https://gptgod.apifox.cn/359234338e0.md): 
+- 视频生成 > sora-2 > OpenAI官方视频格式(适配 newapi) [创建视频(带 Character)](https://gptgod.apifox.cn/369447373e0.md): 
+- 视频生成 > sora-2 > OpenAI官方视频格式(适配 newapi) [从已生成的任务中创建角色](https://gptgod.apifox.cn/384028868e0.md): 
+- 视频生成 > sora-2 > OpenAI官方视频格式(适配 newapi) [使用故事板创建视频](https://gptgod.apifox.cn/385317512e0.md): 
+- 视频生成 > sora-2 > 创建角色接口 [创建角色](https://gptgod.apifox.cn/373960121e0.md): 
+- GPTs 相关 [GPTs对话](https://gptgod.apifox.cn/197687802e0.md): 
+- GPTs 相关 [ 搜索相关 GPTs(chat格式)](https://gptgod.apifox.cn/197690967e0.md): 
+- GPTs 相关 [搜索相关 GPTs(官方格式)](https://gptgod.apifox.cn/197748014e0.md): 
+- GPTs 相关 [查询 GPTs 详情(chat格式)](https://gptgod.apifox.cn/197749872e0.md): 
+- GPTs 相关 [查询 GPTs 详情(官方格式)](https://gptgod.apifox.cn/197748645e0.md): 
+- GPTs 相关 [批量查询 GPTs 详情(chat格式)](https://gptgod.apifox.cn/197794556e0.md): 
+- GPTs 相关 [批量查询 GPTs 详情(官方格式)](https://gptgod.apifox.cn/197794063e0.md): 
+- 数字人 > 官方 API [查询 默认voice 列表](https://gptgod.apifox.cn/249342056e0.md): 
+- 数字人 > 官方 API [生成数字人视频](https://gptgod.apifox.cn/249330380e0.md): 上传图片/视频和音频/文本，生成对应的数字人视频
+- 数字人 > 官方 API [获取任务详情](https://gptgod.apifox.cn/249330381e0.md): 根据任务ID获取生成结果的详细信息
+- 数字人 > 兼容 openai chat 格式 [生成数字人](https://gptgod.apifox.cn/252148098e0.md): 
+- 智谱清言(glm) > 视频生成 [生成(chat 格式)](https://gptgod.apifox.cn/198366391e0.md): 
+- 智谱清言(glm) > 视频生成 [生成(generations)](https://gptgod.apifox.cn/198354402e0.md): 
+- 智谱清言(glm) > 视频生成 [ 查询(async-result)](https://gptgod.apifox.cn/198356186e0.md): 
+- openai > 音频（Audio） [创建语音](https://gptgod.apifox.cn/191855490e0.md): 
+- openai > 音频（Audio） [创建转录](https://gptgod.apifox.cn/191855491e0.md): 
+- openai > 音频（Audio） [创建翻译](https://gptgod.apifox.cn/191855492e0.md): 
+- openai > 聊天（Chat） [创建聊天补全](https://gptgod.apifox.cn/191855493e0.md): 给定一个提示，该模型将返回一个或多个预测的完成，并且还可以返回每个位置的替代标记的概率。
+- openai > 自动补全（Completions） [创建完成](https://gptgod.apifox.cn/191855494e0.md): 给定一个提示，该模型将返回一个或多个预测的完成，并且还可以返回每个位置的替代标记的概率。
+- openai > 嵌入（Embeddings） [创建嵌入](https://gptgod.apifox.cn/191855495e0.md): 获取给定输入的矢量表示，机器学习模型和算法可以轻松使用该表示。
+- openai > 微调（Fine-tuning） [创建微调作业](https://gptgod.apifox.cn/191855496e0.md): 创建一个作业，根据给定的数据集微调指定的模型。
+- openai > 微调（Fine-tuning） [列出微调作业](https://gptgod.apifox.cn/191855497e0.md): 列出您组织的微调工作
+- openai > 微调（Fine-tuning） [检索微调作业](https://gptgod.apifox.cn/191855498e0.md): 获取有关微调工作的信息。
+- openai > 微调（Fine-tuning） [取消微调](https://gptgod.apifox.cn/191855499e0.md): 立即取消微调工作。
+- openai > 微调（Fine-tuning） [列出微调事件](https://gptgod.apifox.cn/191855500e0.md): 获取微调作业的状态更新。
+- openai > 图像（Images） [创建图像](https://gptgod.apifox.cn/191855501e0.md): [图片](https://platform.openai.com/docs/api-reference/images)
+- openai > 图像（Images） [创建图片编辑](https://gptgod.apifox.cn/191855502e0.md): 在给定原始图像和提示的情况下创建编辑或扩展图像。
+- openai > 图像（Images） [创建图像变体](https://gptgod.apifox.cn/191855503e0.md): 创建给定图像的变体。
+- openai > 模型（Models） [列出模型](https://gptgod.apifox.cn/191855504e0.md): 列出当前可用的型号，并提供每个型号的基本信息，例如所有者和可用性。
+- openai > 模型（Models） [检索模型](https://gptgod.apifox.cn/191855505e0.md): 检索模型实例，提供有关模型的基本信息，例如所有者和权限。
+- openai > 模型（Models） [删除微调模型](https://gptgod.apifox.cn/191855506e0.md): 删除微调模型。您必须在组织中具有所有者角色才能删除模型。
+- openai > 文件（Files） [上传文件](https://gptgod.apifox.cn/191855507e0.md): 上传可跨各种端点/功能使用的文件。一个组织上传的所有文件大小最大可达 100 GB。
+- openai > 文件（Files） [删除文件](https://gptgod.apifox.cn/191855508e0.md): 删除文件。
+- openai > 文件（Files） [检索文件](https://gptgod.apifox.cn/191855509e0.md): 返回有关特定文件的信息。
+- openai > 文件（Files） [检索文件内容](https://gptgod.apifox.cn/191855510e0.md): 
+- openai > 文件（Files） [列出文件](https://gptgod.apifox.cn/191855511e0.md): 
+- openai > 审查（Moderations） [创建内容审核](https://gptgod.apifox.cn/191855512e0.md): 对文本是否违反 OpenAI 的内容政策进行分类
+- openai > 助手测试版（AssistantsBeta） [创建助手](https://gptgod.apifox.cn/191855513e0.md): 创建一个带有模型和说明的助手。
+- openai > 助手测试版（AssistantsBeta） [检索助手](https://gptgod.apifox.cn/191855514e0.md): 
+- openai > 助手测试版（AssistantsBeta） [修改助手](https://gptgod.apifox.cn/191855515e0.md): 
+- openai > 助手测试版（AssistantsBeta） [删除助手](https://gptgod.apifox.cn/191855516e0.md): 
+- openai > 助手测试版（AssistantsBeta） [列出助手](https://gptgod.apifox.cn/191855517e0.md): 返回助手列表。
+- openai > 助手测试版（AssistantsBeta） [创建辅助文件](https://gptgod.apifox.cn/191855518e0.md): [通过将File](https://platform.openai.com/docs/api-reference/files)附加到[助手](https://platform.openai.com/docs/api-reference/assistants)来创建助手文件。
+- openai > 助手测试版（AssistantsBeta） [检索助手文件](https://gptgod.apifox.cn/191855519e0.md): 检索 AssistantFile。
+- openai > 助手测试版（AssistantsBeta） [删除辅助文件](https://gptgod.apifox.cn/191855520e0.md): 
+- openai > 助手测试版（AssistantsBeta） [列出助手文件](https://gptgod.apifox.cn/191855521e0.md): 返回辅助文件的列表。
+- openai > 线程数（Threads） [创建线程](https://gptgod.apifox.cn/191855522e0.md): 创建一个线程。
+- openai > 线程数（Threads） [检索线程](https://gptgod.apifox.cn/191855523e0.md): 
+- openai > 线程数（Threads） [修改线程](https://gptgod.apifox.cn/191855524e0.md): 修改后的与指定ID匹配的[线程对象。](https://platform.openai.com/docs/api-reference/threads/object)
+- openai > 线程数（Threads） [删除话题](https://gptgod.apifox.cn/191855525e0.md): 删除一个线程。
+- openai > 留言（Messages） [创建消息](https://gptgod.apifox.cn/191855526e0.md): 
+- openai > 留言（Messages） [检索消息](https://gptgod.apifox.cn/191855527e0.md): 与指定ID匹配的[消息](https://platform.openai.com/docs/api-reference/threads/messages/object)对象。
+- openai > 留言（Messages） [修改留言](https://gptgod.apifox.cn/191855528e0.md): 修改后的[消息](https://platform.openai.com/docs/api-reference/threads/messages/object)对象。
+- openai > 留言（Messages） [列出消息](https://gptgod.apifox.cn/191855529e0.md): 
+- openai > 留言（Messages） [检索消息文件](https://gptgod.apifox.cn/191855530e0.md): 
+- openai > 留言（Messages） [列出消息文件](https://gptgod.apifox.cn/191855531e0.md): 
+- openai > 运行（Runs） [创建运行](https://gptgod.apifox.cn/191855532e0.md): 一个[运行](https://platform.openai.com/docs/api-reference/runs/object)对象。
+- openai > 运行（Runs） [检索运行](https://gptgod.apifox.cn/191855533e0.md): 与指定ID匹配的[运行](https://platform.openai.com/docs/api-reference/runs/object)对象。
+- openai > 运行（Runs） [修改运行](https://gptgod.apifox.cn/191855534e0.md): 与指定 ID 匹配的修改后的[运行对象。](https://platform.openai.com/docs/api-reference/runs/object)
+- openai > 运行（Runs） [列表运行](https://gptgod.apifox.cn/191855535e0.md): [运行](https://platform.openai.com/docs/api-reference/runs/object)对象的列表。
+- openai > 运行（Runs） [提交工具输出以运行](https://gptgod.apifox.cn/191855536e0.md): 当运行具有`status: "requires_action"`和`required_action.type`is时`submit_tool_outputs`，此端点可用于在工具调用全部完成后提交输出。所有输出必须在单个请求中提交。
+- openai > 运行（Runs） [取消运行](https://gptgod.apifox.cn/191855537e0.md): 取消运行`in_progress`。
+- openai > 运行（Runs） [创建线程并运行](https://gptgod.apifox.cn/191855538e0.md): 创建一个线程并在一个请求中运行它。
+- openai > 运行（Runs） [检索运行步骤](https://gptgod.apifox.cn/191855539e0.md): 与指定 ID 匹配的[运行步骤](https://platform.openai.com/docs/api-reference/runs/step-object)对象。
+- openai > 运行（Runs） [列出运行步骤](https://gptgod.apifox.cn/191855540e0.md): 
+- openai > 已弃用-音频（Audio） [创建转录](https://gptgod.apifox.cn/191855541e0.md): 了解如何将音频转换为文本。
+- openai > 已弃用-音频（Audio） [创建翻译](https://gptgod.apifox.cn/191855542e0.md): 将音频翻译成英文。
+- 异步 veo3 、gemini deepsearch 等 > 流式转换 [流式转换接口](https://gptgod.apifox.cn/331577576e0.md): 将 OpenAI 兼容的流式请求转换为 AsyncData 异步任务
+- 异步 veo3 、gemini deepsearch 等 > 异步 gemini-2.5-pro-deepsearch [获取任务链接](https://gptgod.apifox.cn/332469081e0.md): 
+- 异步 veo3 、gemini deepsearch 等 > 异步 gemini-2.5-pro-deepsearch [查询任务详情](https://gptgod.apifox.cn/332471408e0.md): 
+- 异步 veo3 、gemini deepsearch 等 > 异步 veo3 [获取任务链接](https://gptgod.apifox.cn/332471482e0.md): 
+- 异步 veo3 、gemini deepsearch 等 > 异步 veo3 [查询任务详情](https://gptgod.apifox.cn/332471642e0.md): 
+- 异步 veo3 、gemini deepsearch 等 > 异步 sora [获取任务链接](https://gptgod.apifox.cn/363272864e0.md): 
+- 异步 veo3 、gemini deepsearch 等 > 异步 sora [查询任务详情](https://gptgod.apifox.cn/363282400e0.md): 
+- gemini > generateContent [文本非流](https://gptgod.apifox.cn/368086823e0.md): 
+- gemini > generateContent [文本流式](https://gptgod.apifox.cn/368087384e0.md): 
+- gemini > generateContent [图片非流](https://gptgod.apifox.cn/368092339e0.md): 
+
+## Schemas
+- 示例数据模型 [Pet](https://gptgod.apifox.cn/103941414d0.md): 
+- 示例数据模型 [Category](https://gptgod.apifox.cn/103941415d0.md): 
+- 示例数据模型 [Tag](https://gptgod.apifox.cn/103941416d0.md): 
+- veo [veo 模型](https://gptgod.apifox.cn/175385926d0.md): 
+- veo [veo status](https://gptgod.apifox.cn/175385931d0.md): 
+- Schemas [ChatCompletionRequest](https://gptgod.apifox.cn/190209618d0.md): 
+- Schemas [Scene1_InspirationRequest](https://gptgod.apifox.cn/218638133d0.md): 
+- Schemas [Message](https://gptgod.apifox.cn/190209619d0.md): 
+- Schemas [Scene2_CustomRequest](https://gptgod.apifox.cn/218638134d0.md): 
+- Schemas [TransformSuccessResponse](https://gptgod.apifox.cn/190209620d0.md): 
+- Schemas [Scene3_InstrumentalCustomRequest](https://gptgod.apifox.cn/218638135d0.md): 
+- Schemas [ErrorResponse](https://gptgod.apifox.cn/190209621d0.md): 
+- Schemas [Scene4_InstrumentalInspirationRequest](https://gptgod.apifox.cn/218638136d0.md): 
+- Schemas [Scene5A_ContinueUploadedRequest](https://gptgod.apifox.cn/218638137d0.md): 
+- Schemas [Scene5B_ContinueGeneratedRequest](https://gptgod.apifox.cn/218638138d0.md): 
+- Schemas [Scene6A_RemixUploadedRequest](https://gptgod.apifox.cn/218638139d0.md): 
+- Schemas [Scene6B_RemixGeneratedRequest](https://gptgod.apifox.cn/218638140d0.md): 
+- Schemas [Scene7A_ReplaceUploadedRequest](https://gptgod.apifox.cn/218638141d0.md): 
+- Schemas [Scene7B_ReplaceGeneratedRequest](https://gptgod.apifox.cn/218638142d0.md): 
+- Schemas [Scene8_AllStemsRequest](https://gptgod.apifox.cn/218638143d0.md): 
+- Schemas [Scene9_VocalStemsRequest](https://gptgod.apifox.cn/218638144d0.md): 
+- Schemas [Scene10_RewriteRequest](https://gptgod.apifox.cn/218638145d0.md): 
+- Schemas [Scene11_OverpaintingRequest](https://gptgod.apifox.cn/218638146d0.md): 
+- Schemas [ClipResult](https://gptgod.apifox.cn/218638147d0.md): 
+- Schemas [MidiProcessing](https://gptgod.apifox.cn/218638148d0.md): 
+- Schemas [MidiComplete](https://gptgod.apifox.cn/218638149d0.md): 
+- Schemas [Error](https://gptgod.apifox.cn/218638150d0.md): 
+- sora [sora model](https://gptgod.apifox.cn/208588627d0.md): 
+- sora [sora duration](https://gptgod.apifox.cn/210234499d0.md): 
+- sora [sora image ](https://gptgod.apifox.cn/223307204d0.md): 
+- Response [GenerateSuccess](https://gptgod.apifox.cn/218638151d0.md): 
+- Response [BadRequest](https://gptgod.apifox.cn/218638152d0.md): 
+- Response [Unauthorized](https://gptgod.apifox.cn/218638153d0.md): 
+- Response [NotFound](https://gptgod.apifox.cn/218638154d0.md): 

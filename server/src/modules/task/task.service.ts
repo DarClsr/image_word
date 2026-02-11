@@ -46,6 +46,7 @@ export class TaskService {
       status: task.status,
       queuePosition,
       result: task.result,
+      worksId: task.worksId,
       errorMsg: task.errorMsg,
       createdAt: task.createdAt,
       startedAt: task.startedAt,

@@ -1,6 +1,7 @@
 /**
  * 我的页面
  */
+import { userApi } from '../../services/api';
 const app = getApp();
 
 Page({
@@ -59,17 +60,23 @@ Page({
    * 加载用户数据
    */
   loadUserData() {
-    // TODO: 从后端获取用户统计数据
-    this.setData({
-      stats: {
-        works: 12,
-        likes: 256,
-        shares: 45,
-        points: 1000,
-        remainQuota: 8
-      },
-      hasUnread: true
-    });
+    return userApi
+      .getStats()
+      .then((stats) => {
+        this.setData({
+          stats: {
+            works: stats.works || 0,
+            likes: stats.likes || 0,
+            shares: 0,
+            points: 0,
+            remainQuota: stats.remainQuota || 0,
+          },
+          hasUnread: false,
+        });
+      })
+      .catch(() => {
+        app.showError('加载用户数据失败');
+      });
   },
 
   /**

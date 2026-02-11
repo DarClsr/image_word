@@ -17,9 +17,6 @@ import {
 
 @Injectable()
 export class ClientAuthService {
-  /** 是否使用模拟模式（开发环境且微信未配置时启用） */
-  private readonly useMockMode: boolean;
-
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -28,12 +25,8 @@ export class ClientAuthService {
     private readonly wechatService: WechatService,
     private readonly logger: AppLoggerService,
   ) {
-    // 开发环境且微信未配置时启用模拟模式
-    const isDev = this.configService.get<string>('NODE_ENV') !== 'production';
-    this.useMockMode = isDev && !this.wechatService.isConfigured();
-    
-    if (this.useMockMode) {
-      this.logger.warn('微信登录使用模拟模式（开发环境）', 'ClientAuthService');
+    if (!this.wechatService.isConfigured()) {
+      this.logger.warn('微信配置未完成，微信登录将不可用', 'ClientAuthService');
     }
   }
 
@@ -41,24 +34,19 @@ export class ClientAuthService {
    * 微信登录
    */
   async wechatLogin(dto: WechatLoginInput): Promise<LoginResponse> {
-    let wxSession: { openid: string; unionid: string | null };
-
-    // 根据模式选择真实调用或模拟
-    if (this.useMockMode) {
-      // 模拟模式：用于开发测试
-      this.logger.debug(`模拟微信登录: code=${dto.code}`, 'ClientAuthService');
-      wxSession = {
-        openid: `mock_openid_${dto.code}`,
-        unionid: null,
-      };
-    } else {
-      // 真实调用微信 API
-      const session = await this.wechatService.code2Session(dto.code);
-      wxSession = {
-        openid: session.openid,
-        unionid: session.unionid || null,
-      };
+    if (!this.wechatService.isConfigured()) {
+      throw new UnauthorizedException({
+        code: ErrorCodes.WECHAT_CONFIG_MISSING,
+        message: '微信配置未完成，无法登录',
+      });
     }
+
+    // 真实调用微信 API
+    const session = await this.wechatService.code2Session(dto.code);
+    const wxSession = {
+      openid: session.openid,
+      unionid: session.unionid || null,
+    };
 
     // 2. 查找或创建用户
     let user = await this.prisma.user.findUnique({

@@ -1,7 +1,7 @@
 <template>
   <section class="page">
     <PageHeader title="用户管理" subtitle="查看和管理系统用户">
-      <n-button @click="handleExport">
+      <n-button :loading="exporting" @click="handleExport">
         <template #icon>
           <n-icon><DownloadOutline /></n-icon>
         </template>
@@ -254,6 +254,7 @@ const statusOptions = [
 
 /** 加载状态 */
 const loading = ref(false);
+const exporting = ref(false);
 
 /** 数据列表 */
 const dataList = ref<User[]>([]);
@@ -589,7 +590,104 @@ const handleBanConfirm = async () => {
 
 /** 导出 */
 const handleExport = () => {
-  message.info('导出功能开发中');
+  if (exporting.value) return;
+  exporting.value = true;
+
+  const params: Record<string, unknown> = {};
+  if (queryParams.keyword) params.keyword = queryParams.keyword;
+  if (queryParams.memberType) params.memberType = queryParams.memberType;
+  if (queryParams.status !== null) params.status = queryParams.status;
+  if (queryParams.dateRange) {
+    params.startDate = new Date(queryParams.dateRange[0]).toISOString();
+    params.endDate = new Date(queryParams.dateRange[1]).toISOString();
+  }
+
+  fetchAllUsers(params)
+    .then((users) => {
+      if (!users.length) {
+        message.warning('暂无可导出的用户数据');
+        return;
+      }
+      const csv = buildUserCsv(users);
+      const fileName = `users_${new Date().toISOString().slice(0, 10)}.csv`;
+      downloadCsv(csv, fileName);
+      message.success('导出成功');
+    })
+    .catch(() => {
+      message.error('导出失败');
+    })
+    .finally(() => {
+      exporting.value = false;
+    });
+};
+
+const fetchAllUsers = async (params: Record<string, unknown>) => {
+  const pageSize = 100;
+  let page = 1;
+  let total = 0;
+  const all: User[] = [];
+
+  do {
+    const data = await fetchUsers({ ...params, page, pageSize });
+    const list = data.list || [];
+    total = data.total || 0;
+    all.push(...list);
+    page += 1;
+  } while (all.length < total);
+
+  return all;
+};
+
+const buildUserCsv = (users: User[]) => {
+  const header = [
+    'ID',
+    '昵称',
+    '手机号',
+    '会员类型',
+    '状态',
+    '总额度',
+    '已用额度',
+    '作品数',
+    '最后登录',
+    '注册时间',
+  ];
+
+  const rows = users.map((user) => [
+    user.id,
+    user.nickname || '',
+    user.phone || '',
+    getMemberText(user.memberType),
+    user.status === 1 ? '正常' : '封禁',
+    user.totalQuota ?? 0,
+    user.usedQuota ?? 0,
+    user.worksCount ?? 0,
+    formatDateTime(user.lastLoginAt),
+    formatDateTime(user.createdAt),
+  ]);
+
+  return [header, ...rows]
+    .map((row) => row.map((value) => escapeCsv(value)).join(','))
+    .join('\n');
+};
+
+const escapeCsv = (value: unknown) => {
+  const text = value === null || value === undefined ? '' : String(value);
+  if (/[,"\n]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+};
+
+const downloadCsv = (content: string, fileName: string) => {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 /** 初始化 */

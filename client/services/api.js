@@ -172,7 +172,7 @@ export const userApi = {
    * 获取用户额度信息
    */
   getQuota() {
-    return request.get('/user/quota');
+    return request.get('/user/stats');
   }
 };
 
@@ -184,7 +184,7 @@ export const generationApi = {
    * 获取生成配置（风格、模型、比例、数量）
    */
   getConfig() {
-    return request.get('/client/generation/config');
+    return request.get('/generation/config');
   }
 };
 
@@ -199,7 +199,7 @@ export const promptApi = {
    * @param {string} [params.style] - 风格名称
    */
   expand(params) {
-    return request.post('/client/prompt/expand', params, { 
+    return request.post('/prompt/expand', params, { 
       showLoading: true, 
       loadingText: 'AI 扩写中...' 
     });
@@ -212,7 +212,7 @@ export const promptApi = {
    * @param {string} [params.style] - 风格名称
    */
   optimize(params) {
-    return request.post('/client/prompt/optimize', params);
+    return request.post('/prompt/optimize', params);
   }
 };
 
@@ -230,7 +230,7 @@ export const imageTextApi = {
    * @param {string} [params.model] - AI 模型：ideogram/flux/jimeng
    */
   generate(params) {
-    return request.post('/client/image-text/generate', params, {
+    return request.post('/image-text/generate', params, {
       showLoading: true,
       loadingText: 'AI 生成中...',
       timeout: 60000, // 图片生成可能需要较长时间
@@ -241,21 +241,21 @@ export const imageTextApi = {
    * 获取模板列表
    */
   getTemplates() {
-    return request.get('/client/image-text/templates');
+    return request.get('/image-text/templates');
   },
 
   /**
    * 获取风格列表
    */
   getStyles() {
-    return request.get('/client/image-text/styles');
+    return request.get('/image-text/styles');
   },
 
   /**
    * 获取可用的 AI 模型
    */
   getModels() {
-    return request.get('/client/image-text/models');
+    return request.get('/image-text/models');
   }
 };
 

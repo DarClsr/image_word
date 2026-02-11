@@ -27,6 +27,7 @@ export const ErrorCodes = {
   TOKEN_EXPIRED: 2001,
   TOKEN_INVALID: 2002,
   LOGIN_FAILED: 2003,
+  WECHAT_CONFIG_MISSING: 2004,
 
   // 业务错误 3xxx
   QUOTA_EXCEEDED: 3001,

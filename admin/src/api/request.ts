@@ -202,6 +202,9 @@ export const patch = <T = unknown>(url: string, data?: unknown, config?: AxiosRe
 export const del = <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> =>
   instance.delete(url, config);
 
+export const del = <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+  instance.delete(url, config);
+
 /**
  * 上传文件
  */

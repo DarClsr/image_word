@@ -1,7 +1,7 @@
 /**
  * 根模块
  */
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 
@@ -9,6 +9,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { RedisModule } from './shared/redis/redis.module';
 import { LoggerModule } from './shared/logger/logger.module';
+import { CacheModule } from './shared/cache/cache.module';
 
 // 业务模块
 import { AuthModule } from './modules/auth/auth.module';
@@ -21,9 +22,14 @@ import { HealthModule } from './modules/health/health.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AdModule } from './modules/ad/ad.module';
+import { SystemModule } from './modules/system/system.module';
+import { TemplateModule } from './modules/template/template.module';
 
 // 配置验证
 import { validateEnv } from './config/env.validation';
+import { AppConfigModule } from './config/config.module';
+import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { SecurityMiddleware } from './common/middleware/security.middleware';
 
 @Module({
   imports: [
@@ -33,6 +39,9 @@ import { validateEnv } from './config/env.validation';
       validate: validateEnv,
       envFilePath: ['.env.local', '.env'],
     }),
+
+    // 配置模块（封装服务）
+    AppConfigModule,
 
     // 限流模块
     ThrottlerModule.forRoot([
@@ -57,6 +66,7 @@ import { validateEnv } from './config/env.validation';
     PrismaModule,
     RedisModule,
     LoggerModule,
+    CacheModule,
 
     // 业务模块
     AuthModule,
@@ -69,6 +79,12 @@ import { validateEnv } from './config/env.validation';
     QueueModule,
     AiModule,
     AdModule,
+    SystemModule,
+    TemplateModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(SecurityMiddleware, LoggerMiddleware).forRoutes('*');
+  }
+}
