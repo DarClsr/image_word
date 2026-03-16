@@ -4,14 +4,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { maskPhone } from '../../utils/mask.util';
-import { QueryUserInput, UpdateQuotaInput } from './schemas/user.schema';
+import { QueryUserInput, UpdateQuotaInput, UpdateMemberInput } from './schemas/user.schema';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * 查询用户列表（管理端）
+   * 查询用户列表（管理端�?
    */
   async findAll(query: QueryUserInput) {
     const { page, pageSize, keyword, memberType, status, startDate, endDate } = query;
@@ -154,23 +154,19 @@ export class UserService {
     });
 
     if (!user) {
-      throw new NotFoundException('用户不存在');
+      throw new NotFoundException('�û�������');
     }
 
-    // 如果新额度小于已用额度，需要特殊处理
-    if (dto.quota < user.usedQuota) {
-      throw new BadRequestException('新额度不能小于已使用额度');
+    const newQuota = user.totalQuota + dto.amount;
+    if (newQuota < user.usedQuota) {
+      throw new BadRequestException('�¶�Ȳ���С����ʹ�ö��');
     }
 
-    const oldQuota = user.totalQuota;
-
-    // 更新额度
     const updatedUser = await this.prisma.user.update({
       where: { id },
-      data: { totalQuota: dto.quota },
+      data: { totalQuota: newQuota },
     });
 
-    // 记录审计日志
     await this.prisma.auditLog.create({
       data: {
         adminId,
@@ -178,8 +174,8 @@ export class UserService {
         module: 'user',
         targetId: id,
         targetType: 'quota',
-        oldValue: { totalQuota: oldQuota },
-        newValue: { totalQuota: dto.quota, reason: dto.reason },
+        oldValue: { totalQuota: user.totalQuota },
+        newValue: { totalQuota: newQuota, amount: dto.amount, reason: dto.reason },
         ip: '',
       },
     });
@@ -191,8 +187,82 @@ export class UserService {
   }
 
   /**
-   * 封禁用户
+   * ������Ա
    */
+  async updateMember(id: number, dto: UpdateMemberInput, adminId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException('�û�������');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        memberType: dto.memberType,
+        memberExpireAt: dto.expireAt ? new Date(dto.expireAt) : null,
+      },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        adminId,
+        action: 'update',
+        module: 'user',
+        targetId: id,
+        targetType: 'member',
+        oldValue: { memberType: user.memberType, memberExpireAt: user.memberExpireAt },
+        newValue: { memberType: dto.memberType, memberExpireAt: dto.expireAt, reason: dto.reason },
+        ip: '',
+      },
+    });
+
+    return updatedUser;
+  }
+
+  /**
+   * ��ȡ�û���Ʒ
+   */
+  async getUserWorks(userId: number, query: { page: number; pageSize: number; status?: string; startDate?: string; endDate?: string; styleId?: number; modelId?: number; keyword?: string }) {
+    const { page, pageSize, status, startDate, endDate, styleId, modelId, keyword } = query;
+    const skip = (page - 1) * pageSize;
+
+    const where: Record<string, unknown> = { userId };
+    if (status) where.status = status;
+    if (styleId) where.styleId = styleId;
+    if (modelId) where.modelId = modelId;
+    if (keyword) where.prompt = { contains: keyword, mode: 'insensitive' };
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) (where.createdAt as Record<string, unknown>).gte = new Date(startDate);
+      if (endDate) (where.createdAt as Record<string, unknown>).lte = new Date(endDate);
+    }
+
+    const [list, total] = await Promise.all([
+      this.prisma.works.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          style: { select: { id: true, name: true } },
+          model: { select: { id: true, name: true } },
+        },
+      }),
+      this.prisma.works.count({ where }),
+    ]);
+
+    return {
+      list,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
   async ban(id: number, reason: string | undefined, adminId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -266,3 +336,7 @@ export class UserService {
     return updatedUser;
   }
 }
+
+
+
+

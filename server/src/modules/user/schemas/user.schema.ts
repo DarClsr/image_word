@@ -14,7 +14,7 @@ export const UpdateUserSchema = z.object({
 export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
 
 /**
- * 查询用户列表（管理端）
+ * 查询用户列表（管理端�?
  */
 export const QueryUserSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -31,10 +31,20 @@ export type QueryUserInput = z.infer<typeof QueryUserSchema>;
  * 调整用户额度
  */
 export const UpdateQuotaSchema = z.object({
-  quota: z.number().int().min(0, '额度不能为负数'),
-  reason: z.string().min(1, '请填写调整原因').max(200),
+  amount: z.number().int(),
+  reason: z.string().min(1, '����ԭ�����').max(200),
 });
 export type UpdateQuotaInput = z.infer<typeof UpdateQuotaSchema>;
+
+/**
+ * ������Ա
+ */
+export const UpdateMemberSchema = z.object({
+  memberType: z.enum(['free', 'basic', 'pro']),
+  expireAt: z.string().datetime().optional(),
+  reason: z.string().max(200).optional(),
+});
+export type UpdateMemberInput = z.infer<typeof UpdateMemberSchema>;
 
 /**
  * 封禁/解封用户
@@ -43,3 +53,5 @@ export const BanUserSchema = z.object({
   reason: z.string().max(200).optional(),
 });
 export type BanUserInput = z.infer<typeof BanUserSchema>;
+
+

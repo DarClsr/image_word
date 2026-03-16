@@ -154,9 +154,15 @@ export class StorageService {
       await client.makeBucket(bucket, 'us-east-1');
     }
 
-    await client.putObject(bucket, objectName, buffer, {
-      'Content-Type': contentType,
-    });
+    await client.putObject(
+      bucket,
+      objectName,
+      buffer,
+      buffer.length,
+      {
+        'Content-Type': contentType,
+      },
+    );
 
     return {
       url: this.buildPublicUrl(objectName),

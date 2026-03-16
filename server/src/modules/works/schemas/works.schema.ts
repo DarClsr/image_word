@@ -68,3 +68,10 @@ export const BatchAuditWorksSchema = z.object({
   reason: z.string().max(500).optional(),
 });
 export type BatchAuditWorksInput = z.infer<typeof BatchAuditWorksSchema>;
+/**
+ * 批量删除
+ */
+export const BatchDeleteWorksSchema = z.object({
+  ids: z.array(z.number().int().positive()).min(1, '请选择作品'),
+});
+export type BatchDeleteWorksInput = z.infer<typeof BatchDeleteWorksSchema>;

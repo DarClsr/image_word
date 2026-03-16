@@ -1,7 +1,7 @@
 /**
  * 广告管理 API
  */
-import { get } from '@/utils/request';
+import { get } from './request';
 import type { ApiListResponse } from '@/types/common';
 
 const BASE_URL = '/admin/ad';

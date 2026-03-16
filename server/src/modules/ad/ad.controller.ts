@@ -10,6 +10,7 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { AdService } from './ad.service';
 import { ClientAuthGuard } from '../../common/guards';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';

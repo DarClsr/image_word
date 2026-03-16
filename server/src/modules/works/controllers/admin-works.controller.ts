@@ -1,7 +1,7 @@
 /**
  * 管理端作品控制器
  */
-import { Controller, Get, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { WorksService } from '../works.service';
 import { AdminAuthGuard, PermissionGuard } from '../../../common/guards';
 import { Permissions, CurrentAdmin } from '../../../common/decorators';
@@ -13,6 +13,8 @@ import {
   AuditWorksInput,
   BatchAuditWorksSchema,
   BatchAuditWorksInput,
+  BatchDeleteWorksSchema,
+  BatchDeleteWorksInput,
 } from '../schemas/works.schema';
 import { AdminUser } from '@prisma/client';
 
@@ -64,6 +66,18 @@ export class AdminWorksController {
     @CurrentAdmin() admin: AdminUser,
   ) {
     return this.worksService.batchAudit(dto, admin.id);
+  }
+
+  /**
+   * 鎵归噺鍒犻櫎浣滃搧
+   */
+  @Post('batch-delete')
+  @Permissions('works:delete')
+  async batchDelete(
+    @Body(new ZodValidationPipe(BatchDeleteWorksSchema)) dto: BatchDeleteWorksInput,
+    @CurrentAdmin() admin: AdminUser,
+  ) {
+    return this.worksService.batchDelete(dto, admin.id);
   }
 
   /**

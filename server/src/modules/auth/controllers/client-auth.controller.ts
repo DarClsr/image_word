@@ -1,7 +1,7 @@
 /**
  * 小程序端认证控制器
  */
-import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, UseGuards } from '@nestjs/common';
 import { ClientAuthService } from '../services/client-auth.service';
 import { Public, CurrentUser } from '../../../common/decorators';
 import { ClientAuthGuard } from '../../../common/guards';
@@ -12,6 +12,7 @@ import {
   RefreshTokenSchema,
   RefreshTokenInput,
 } from '../schemas/auth.schema';
+import { UpdateUserSchema, UpdateUserInput } from '../../user/schemas/user.schema';
 import { User } from '@prisma/client';
 
 @Controller('client/auth')
@@ -47,6 +48,17 @@ export class ClientAuthController {
   @Get('profile')
   async getProfile(@CurrentUser() user: User) {
     return this.authService.getProfile(user.id);
+  }
+
+  /**
+   * 鏇存柊鐢ㄦ埛淇℃伅
+   */
+  @Put('profile')
+  async updateProfile(
+    @CurrentUser() user: User,
+    @Body(new ZodValidationPipe(UpdateUserSchema)) dto: UpdateUserInput,
+  ) {
+    return this.authService.updateProfile(user.id, dto);
   }
 
   /**

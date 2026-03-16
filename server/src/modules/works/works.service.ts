@@ -5,7 +5,7 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { ErrorCodes } from '../../common/filters/http-exception.filter';
-import { CreateWorksInput, QueryWorksInput, AuditWorksInput, BatchAuditWorksInput } from './schemas/works.schema';
+import { CreateWorksInput, QueryWorksInput, AuditWorksInput, BatchAuditWorksInput, BatchDeleteWorksInput } from './schemas/works.schema';
 import { generateUUID } from '../../utils/crypto.util';
 
 @Injectable()
@@ -384,6 +384,29 @@ export class WorksService {
         action: 'batch_audit',
         module: 'works',
         newValue: { ids, status, reason },
+        ip: '',
+      },
+    });
+
+    return { success: true, count: result.count };
+  }
+
+  /**
+   * 鎵归噺鍒犻櫎浣滃搧
+   */
+  async batchDelete(dto: BatchDeleteWorksInput, adminId: number) {
+    const { ids } = dto;
+
+    const result = await this.prisma.works.deleteMany({
+      where: { id: { in: ids } },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        adminId,
+        action: 'batch_delete',
+        module: 'works',
+        newValue: { ids },
         ip: '',
       },
     });

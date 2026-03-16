@@ -13,7 +13,10 @@ import {
   UpdateQuotaInput,
   BanUserSchema,
   BanUserInput,
+  UpdateMemberSchema,
+  UpdateMemberInput,
 } from '../schemas/user.schema';
+import { QueryWorksSchema, QueryWorksInput } from '../../works/schemas/works.schema';
 import { AdminUser } from '@prisma/client';
 
 @Controller('admin/user')
@@ -42,6 +45,18 @@ export class AdminUserController {
   }
 
   /**
+   * 鑾峰彇鐢ㄦ埛浣滃搧
+   */
+  @Get(':id/works')
+  @Permissions('user:list')
+  async getWorks(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(QueryWorksSchema)) query: QueryWorksInput,
+  ) {
+    return this.userService.getUserWorks(parseInt(id, 10), query);
+  }
+
+  /**
    * 调整用户额度
    */
   @Put(':id/quota')
@@ -52,6 +67,19 @@ export class AdminUserController {
     @CurrentAdmin() admin: AdminUser,
   ) {
     return this.userService.updateQuota(parseInt(id, 10), dto, admin.id);
+  }
+
+  /**
+   * 璋冩暣鐢ㄦ埛浼氬憳
+   */
+  @Put(':id/member')
+  @Permissions('user:update')
+  async updateMember(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateMemberSchema)) dto: UpdateMemberInput,
+    @CurrentAdmin() admin: AdminUser,
+  ) {
+    return this.userService.updateMember(parseInt(id, 10), dto, admin.id);
   }
 
   /**

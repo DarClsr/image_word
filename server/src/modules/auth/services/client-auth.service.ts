@@ -14,6 +14,7 @@ import {
   LoginResponse,
   ClientTokenPayload,
 } from '../schemas/auth.schema';
+import { UpdateUserInput } from '../../user/schemas/user.schema';
 
 @Injectable()
 export class ClientAuthService {
@@ -249,6 +250,44 @@ export class ClientAuthService {
     return {
       ...user,
       remainQuota: user.totalQuota - user.usedQuota,
+    };
+  }
+
+  /**
+   * 鏇存柊鐢ㄦ埛淇℃伅
+   */
+  async updateProfile(userId: number, dto: UpdateUserInput) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException({
+        code: ErrorCodes.TOKEN_INVALID,
+        message: '鐢ㄦ埛涓嶅瓨鍦?',
+      });
+    }
+
+    const data = Object.keys(dto).length ? dto : null;
+    const updatedUser = data
+      ? await this.prisma.user.update({
+          where: { id: userId },
+          data,
+        })
+      : user;
+
+    return {
+      id: updatedUser.id,
+      nickname: updatedUser.nickname,
+      avatar: updatedUser.avatar,
+      phone: updatedUser.phone,
+      gender: updatedUser.gender,
+      memberType: updatedUser.memberType,
+      memberExpireAt: updatedUser.memberExpireAt,
+      totalQuota: updatedUser.totalQuota,
+      usedQuota: updatedUser.usedQuota,
+      remainQuota: updatedUser.totalQuota - updatedUser.usedQuota,
+      createdAt: updatedUser.createdAt,
     };
   }
 

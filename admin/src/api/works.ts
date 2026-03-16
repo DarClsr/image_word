@@ -9,7 +9,7 @@ export const fetchWorkDetail = (id: number) => get<Work>(`${BASE_URL}/${id}`);
 
 export const auditWork = (payload: WorkAudit) => put(`${BASE_URL}/${payload.id}/audit`, payload);
 
-export const batchAuditWork = (payload: WorkBatchAudit) => post(`${BASE_URL}/batch-audit`, payload);
+export const batchAuditWork = (payload: WorkBatchAudit) => put(`${BASE_URL}/batch-audit`, payload);
 
 export const removeWork = (id: number) => del(`${BASE_URL}/${id}`);
 
